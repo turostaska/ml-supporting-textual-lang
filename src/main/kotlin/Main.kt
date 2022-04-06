@@ -1,10 +1,18 @@
-import java.io.FileNotFoundException
+import org.antlr.v4.runtime.CharStreams
+import org.antlr.v4.runtime.CommonTokenStream
+import symtab.SymtabBuilderVisitor
+import symtab.extensions.walk
+import util.Resources
 
-object Resources {
-    fun get(name: String) = javaClass.getResource(name)?.readText()
-        ?: throw FileNotFoundException("Resource with name $name can't be found.")
-}
+val symtabBuilder = SymtabBuilderVisitor()
 
 fun main() {
-    MyTestListener(Resources.get("hello1")).getKotlinCode().also(::println)
+    val code = Resources.read("basic_class_declaration")
+    val lexer = kobraLexer(CharStreams.fromString(code))
+    val tokens = CommonTokenStream(lexer)
+    kobraParser(tokens).program().let {
+        symtabBuilder.visit(it)
+    }
+
+    symtabBuilder.walk().let(::println)
 }

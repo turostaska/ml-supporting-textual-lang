@@ -3,12 +3,17 @@ grammar kobra;
 // SECTION: general
 
 program
-    : NL* (classDeclaration)* EOF
+    : NL* (declaration NL*)* EOF
     ;
 
 declaration
     : classDeclaration
     | functionDeclaration
+    | propertyDeclaration
+    ;
+
+propertyDeclaration
+    : (VAL | VAR) simpleIdentifier (COLON NL* type)? (NL* (ASSIGNMENT NL* expression))?
     ;
 
 functionDeclaration // todo: modifiers
@@ -91,6 +96,7 @@ expression // todo
     | IntegerLiteral
     | BooleanLiteral
     | NullLiteral
+    | StringLiteral
     ;
 
 // SECTION: types
@@ -114,6 +120,10 @@ NullLiteral: 'null';
 IntegerLiteral
     : '1'..'9' ('0'..'9')*
     | '0'
+    ;
+
+StringLiteral
+    : STRING
     ;
 
 // SECTION: keywords
@@ -154,6 +164,7 @@ CONJ: '&&';
 DISJ: '||';
 SEMICOLON: ';';
 DOT: '.';
+QUOTE: '"';
 
 NL: '\n' | '\r' '\n'?;
 

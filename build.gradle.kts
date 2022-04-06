@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm") version "1.6.10"
     application
     antlr
+    idea
 }
 
 group = "me.albert"
@@ -14,14 +15,24 @@ repositories {
     mavenCentral()
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs("src/main/kotlin")
-            srcDirs("src/main/java")
+val langPath = "src/main/java/"
+tasks.generateGrammarSource {
+    maxHeapSize = "64m"
+    outputDirectory = File(langPath)
+    arguments = listOf("-visitor", "-listener")
+}
+
+configure<SourceSetContainer> {
+    named("main") {
+        withConvention(org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet::class) {
+            // kotlin.srcDir("build/generated-src/antlr/main")
+            kotlin.srcDir(langPath)
+            kotlin.srcDir("src/main/kotlin")
         }
     }
 }
+
+tasks.getByName("compileKotlin").dependsOn("generateGrammarSource")
 
 dependencies {
     testImplementation(kotlin("test"))

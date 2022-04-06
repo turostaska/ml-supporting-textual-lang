@@ -1,0 +1,13 @@
+// comments
+val a = 8
+
+ class UnpairedImageDataset(
+    val src: Image2d,
+    var trg: Image2d,
+    val transform: Compose? = null,
+    val unaligned: Boolean = true,
+    srcMask: Image2d,
+) : Dataset() {
+    val foo: Int = 0
+    var bar = "asd"
+}

@@ -1,6 +1,3 @@
-import language.testBaseVisitor
-import language.testLexer
-import language.testParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import java.io.File
