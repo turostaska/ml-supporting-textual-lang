@@ -1,6 +1,7 @@
 package symtab
 
 // todo: visibility
+// todo: nullability (in Type?)
 class Symbol(
     val name: String,
     val type: String, // todo: Type class -> hierarchia

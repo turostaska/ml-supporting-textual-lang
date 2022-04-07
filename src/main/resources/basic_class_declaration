@@ -1,5 +1,5 @@
 // comments
-val a = 8
+val intVal = 8
 
  class UnpairedImageDataset(
     val src: Image2d,
@@ -10,4 +10,23 @@ val a = 8
 ) : Dataset() {
     val foo: Int = 0
     var bar = "asd"
+
+    class Inner {
+        val booleanVal = true
+        var stringVar = "hello"
+        var nullStrVal: String? = null
+        val nullVal = null // todo: compilation error, type can't be inferred
+    }
+
 }
+
+class Animal(
+    val name: String,
+) {
+    // constructor(
+    //     num: Int,
+    // ) : this("Animal")
+}
+
+var globalBooleanVar = false
+

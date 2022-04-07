@@ -2,6 +2,9 @@ package symtab
 
 import kobraBaseVisitor
 import kobraParser.*
+import symtab.extensions.inferredType
+import symtab.extensions.isNotMember
+import symtab.extensions.mutability
 
 // stack vagy linked-list alapú symtab?
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
@@ -36,24 +39,22 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
         val name = simpleIdentifier().text
         val type = this.type().text
 
-        if (VAL() == null && VAR() == null) {
-            // Not a class member, only a parameter
+        if (isNotMember) {
             // We are in constructor scope, so we add the symbol to the symtab
+            // todo: assert type of scope
             currentScope[name] = Symbol(name, type, mutable = false)
         } else {
             // A class member, we add it to the class scope
-            val mutability = VAL()?.text.orEmpty() + VAR()?.text.orEmpty()
-            currentScope.parent!![name] = Symbol(name, type, mutability)
+            currentScope.parent!![name] = Symbol(name, type, this.mutability)
         }
         return super.visitClassParameter(this)
     }
 
-    override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Any? {
-        val name = ctx.simpleIdentifier().text
-        val type = ctx.type()?.text ?: "unknown" // todo: type inference
-        val mutability = ctx.VAL()?.text.orEmpty() + ctx.VAR()?.text.orEmpty()
+    override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Any? = ctx.run {
+        val name = simpleIdentifier().text
+        val type = type()?.text ?: expression().inferredType
 
-        currentScope[name] = Symbol(name, type, mutability)
-        return super.visitPropertyDeclaration(ctx)
+        currentScope[name] = Symbol(name, type, this.mutability)
+        return super.visitPropertyDeclaration(this)
     }
 }
