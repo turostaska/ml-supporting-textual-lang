@@ -15,6 +15,6 @@ val ExpressionContext.inferredType get() = when {
     isBoolean -> "Boolean"
     isInt -> "Int"
     isString -> "String"
-    isNullLiteral -> "null"
+    isNullLiteral -> "Nothing?"
     else -> "Unknown"
 }

@@ -7,7 +7,8 @@ fun TypeHierarchy.find(type: Type): Type? = root.findInSubtree(type)
 
 fun String.asType() = Type(this.removeSuffix("?"), "?" in this)
 
-fun TypeHierarchy.find(type: String) : Type? = root.findInSubtree(type.asType())
+fun TypeHierarchy.find(type: String) = root.findInSubtree(type.asType()) ?:
+    throw RuntimeException("Can't find type '$type' in type hierarchy")
 
 fun Type.findInSubtree(type: Type): Type? {
     if (this == type) return this

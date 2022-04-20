@@ -6,8 +6,8 @@ class Type(
     private val _parents: MutableSet<Type> = mutableSetOf(),
     private val _children: MutableSet<Type> = mutableSetOf(),
 ) {
-    val parents = _parents.toSet()
-    val children = _children.toSet()
+    val parents get() = _parents.toSet()
+    val children get() = _children.toSet()
 
     fun addParent(parent: Type) {
         this._parents += parent
@@ -17,6 +17,11 @@ class Type(
     fun addChild(child: Type) {
         this._children += child
         child._parents += this
+    }
+
+    fun removeParent(parent: Type) {
+        this._parents -= parent
+        parent._children -= this
     }
 
     override fun equals(other: Any?): Boolean {
@@ -42,9 +47,15 @@ class Type(
         children.forEach { it._parents += this }
     }
 
+    val fullName = name + if (nullable) "?" else ""
 
+    override fun toString() = fullName
+
+    fun insertUnder(type: Type) {
+        this._children.toList().forEach {
+            it.addParent(type)
+            it.removeParent(this)
+        }
+        this.addChild(type)
+    }
 }
-
-val anyType get() = Type("Any", false)
-
-val anyTypeNullable get() = Type("Any?", true)

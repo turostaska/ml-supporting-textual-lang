@@ -1,6 +1,10 @@
 // comments
 val intVal = 8
 
+class Image2d
+
+class Compose
+
  class UnpairedImageDataset(
     val src: Image2d,
     var trg: Image2d,
