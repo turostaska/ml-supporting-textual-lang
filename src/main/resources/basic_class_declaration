@@ -5,6 +5,10 @@ class Image2d
 
 class Compose
 
+class Foo : Image2d(), Compose()
+
+class Dataset
+
  class UnpairedImageDataset(
     val src: Image2d,
     var trg: Image2d,

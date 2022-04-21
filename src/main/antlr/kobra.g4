@@ -82,6 +82,10 @@ classParameter
     ;
 
 delegationSpecifiers
+    : delegationSpecifier (NL* COMMA NL* delegationSpecifier)*
+    ;
+
+delegationSpecifier
     : simpleIdentifier constructorInvocation
     ;
 
