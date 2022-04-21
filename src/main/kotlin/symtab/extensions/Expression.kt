@@ -8,7 +8,6 @@ val ExpressionContext.isString get() = (this.StringLiteral() != null)
 
 val ExpressionContext.isInt get() = (this.IntegerLiteral() != null)
 
-// todo: null values should have explicit type declaration
 val ExpressionContext.isNullLiteral get() = (this.NullLiteral() != null)
 
 val ExpressionContext.inferredType get() = when {
@@ -16,5 +15,5 @@ val ExpressionContext.inferredType get() = when {
     isInt -> "Int"
     isString -> "String"
     isNullLiteral -> "Nothing?"
-    else -> "Unknown"
+    else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
 }

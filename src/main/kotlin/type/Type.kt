@@ -50,12 +50,4 @@ class Type(
     val fullName = name + if (nullable) "?" else ""
 
     override fun toString() = fullName
-
-    fun insertUnder(type: Type) {
-        this._children.toList().forEach {
-            it.addParent(type)
-            it.removeParent(this)
-        }
-        this.addChild(type)
-    }
 }

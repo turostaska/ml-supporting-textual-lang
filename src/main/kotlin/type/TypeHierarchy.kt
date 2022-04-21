@@ -25,8 +25,20 @@ class TypeHierarchy {
             addType(name, setOf("Any"))
         } else {
             require(baseClassNames.none { "?" in it }) { "The names of the base classes should only contain the non-nullable variants" }
+
             baseClassNames.map { this.find("$it?") }.forEach { it.insertUnder("$name?".asType()) }
             baseClassNames.map { this.find(it) }.forEach { it.insertUnder(name.asType()) }
+
+            find("$name?").addChild(find(name))
         }
+    }
+
+    private fun Type.insertUnder(type: Type) {
+        type.addParent(this)
+
+        val nothingChild = if (type.nullable) nothingN else nothing
+        type.addChild(nothingChild)
+
+        nothingChild.removeParent(this)
     }
 }
