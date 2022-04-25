@@ -13,7 +13,6 @@ class Symbol(
     val name: String,
     val type: Type,
     val mutability: Mutability,
-    val typeHierarchy: TypeHierarchy,
 ) {
     enum class Mutability {
         VAR, VAL,
@@ -28,7 +27,6 @@ class Symbol(
         name = name,
         type = typeHierarchy.find(type),
         mutability = mutability.asMutability,
-        typeHierarchy = typeHierarchy,
     )
 
     constructor(
@@ -40,7 +38,6 @@ class Symbol(
         name = name,
         type = typeHierarchy.find(type),
         mutability = mutable.asMutability,
-        typeHierarchy = typeHierarchy,
     )
 
     override fun toString() = "${mutability.name} $name: $type"

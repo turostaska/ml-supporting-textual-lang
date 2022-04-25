@@ -23,7 +23,7 @@ class Dataset
         val booleanVal = true
         var stringVar = "hello"
         var nullStrVal: String? = null
-        val nullVal = null // todo: compilation error, type can't be inferred
+        val nullVal = null // inferred type is 'Nothing?'
     }
 
 }

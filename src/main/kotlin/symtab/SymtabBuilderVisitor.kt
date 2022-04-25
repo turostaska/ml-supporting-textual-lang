@@ -8,7 +8,6 @@ import symtab.extensions.mutability
 import type.TypeHierarchy
 import type.util.contains
 
-// stack vagy linked-list alapú symtab?
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
 class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
     private lateinit var currentScope: Scope
@@ -23,7 +22,6 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
     override fun visitClassDeclaration(ctx: ClassDeclarationContext): Any? {
         val name = ctx.simpleIdentifier().text
         val superClasses = ctx.delegationSpecifiers()?.delegationSpecifier()?.map { it.simpleIdentifier().text } ?: emptyList()
-        superClasses.toString()
 
         if (name in typeHierarchy)
             throw RuntimeException("Redefinition of class '$name'")
