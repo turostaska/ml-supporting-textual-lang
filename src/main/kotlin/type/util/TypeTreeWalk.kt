@@ -5,7 +5,9 @@ import type.TypeHierarchy
 
 fun TypeHierarchy.find(type: Type): Type? = root.findInSubtree(type)
 
-fun String.asType() = Type(this.removeSuffix("?"), "?" in this)
+fun String.asType(
+    pythonName: String = this.removeSuffix("?")
+) = Type(this.removeSuffix("?"), "?" in this, pythonName = pythonName)
 
 fun TypeHierarchy.find(type: String) = root.findInSubtree(type.asType()) ?:
     throw RuntimeException("Can't find type '$type' in type hierarchy")

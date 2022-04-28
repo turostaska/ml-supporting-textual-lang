@@ -5,6 +5,7 @@ class Type(
     val nullable: Boolean,
     private val _parents: MutableSet<Type> = mutableSetOf(),
     private val _children: MutableSet<Type> = mutableSetOf(),
+    val pythonName: String = name,
 ) {
     val parents get() = _parents.toSet()
     val children get() = _children.toSet()

@@ -14,4 +14,9 @@ object TypeNames {
     const val NUMBER_N = "Number?"
     const val NOTHING_N = "Nothing?"
     const val INT_N = "Int?"
+
+    const val ANY_PY = "any"
+    const val STRING_PY = "str"
+    const val BOOLEAN_PY = "bool"
+    const val INT_PY = "int"
 }

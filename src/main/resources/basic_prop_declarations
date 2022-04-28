@@ -1,0 +1,7 @@
+val intVal = 8
+
+var boolVar = true
+
+var nothing = null
+
+val intN: Int? = null

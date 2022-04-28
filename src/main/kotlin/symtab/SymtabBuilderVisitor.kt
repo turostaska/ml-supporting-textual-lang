@@ -26,7 +26,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
         if (name in typeHierarchy)
             throw RuntimeException("Redefinition of class '$name'")
 
-        typeHierarchy.addType(name, superClasses.toSet())
+        typeHierarchy.addType(name, baseClassNames = superClasses.toSet())
 
         currentScope = Scope(parent = currentScope, name = name)
         super.visitClassDeclaration(ctx).also {
