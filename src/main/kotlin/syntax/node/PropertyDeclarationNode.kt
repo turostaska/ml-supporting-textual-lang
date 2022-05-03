@@ -12,7 +12,9 @@ class PropertyDeclarationNode(
 ): SyntaxTreeNode(_parent = parent) {
     override fun toCode(): String {
         require(!isClassProperty) { "Property '$name' seems to be a class property, use toMemberDeclarationCode() instead." }
-        return """
+        return if (isMutable) """
+            |$name: ${type.pythonName} = $value
+        """.trimMargin() else """
             |__$name: ${type.pythonName} = $value
             |def _$name():
             |   return __$name
@@ -22,6 +24,7 @@ class PropertyDeclarationNode(
 
     fun toMemberDeclaration(): String {
         require(isClassProperty) { "Property '$name' seems to be a class property, use toMemberDeclarationCode() instead." }
+        TODO()
         return """
             |
         """.trimMargin()

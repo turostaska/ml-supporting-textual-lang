@@ -1,13 +1,13 @@
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import symtab.SymtabBuilderVisitor
-import symtab.extensions.walk
 import syntax.SyntaxTreeBuilderVisitor
 import syntax.generateCode
 import util.Resources
 
 val symtabBuilder = SymtabBuilderVisitor()
 
+// todo: dipterv portálra máj. 20. tartalomjegyzék
 fun main() {
     val code = Resources.read("basic_prop_declarations")
     val lexer = kobraLexer(CharStreams.fromString(code))
@@ -20,6 +20,5 @@ fun main() {
         it.visit(program)
     }
 
-    val generatedCode = syntaxTreeBuilder.generateCode()
-    symtabBuilder.walk().let(::println)
+    syntaxTreeBuilder.generateCode().let(::println)
 }

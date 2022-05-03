@@ -6,12 +6,13 @@ import kobraParser.PropertyDeclarationContext
 import symtab.Scope
 import syntax.node.PropertyDeclarationNode
 
+// feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
     private val globalScope: Scope,
 ): kobraBaseVisitor<Any>() {
     val syntaxTree = SyntaxTree()
     private lateinit var currentNode: SyntaxTreeNode
-    private lateinit var currentScope: Scope
+    private lateinit var currentScope: Scope // todo: kipróbálni nélküle
 
     override fun visitProgram(ctx: ProgramContext): Any? {
         currentNode = syntaxTree.root
