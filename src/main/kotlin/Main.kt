@@ -9,7 +9,7 @@ val symtabBuilder = SymtabBuilderVisitor()
 
 // todo: dipterv portálra máj. 20. tartalomjegyzék
 fun main() {
-    val code = Resources.read("basic_prop_declarations")
+    val code = Resources.read("basic_class_declaration")
     val lexer = kobraLexer(CharStreams.fromString(code))
     val tokens = CommonTokenStream(lexer)
     val program = kobraParser(tokens).program()

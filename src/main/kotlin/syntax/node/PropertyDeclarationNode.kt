@@ -2,51 +2,21 @@ package syntax.node
 
 import symtab.Symbol
 import syntax.SyntaxTreeNode
-import type.util.appendIf
 
-// todo: külön osztály class propertyknek és simáknak
-class PropertyDeclarationNode(
+open class PropertyDeclarationNode(
     private val symbol: Symbol,
-    private val value: String, // todo
+    protected val value: String?, // todo
     parent: SyntaxTreeNode,
 ): SyntaxTreeNode(_parent = parent) {
-    override fun toCode(): String {
-        require(!isClassProperty) { "Property '$name' seems to be a class property, use toMemberDeclarationCode() instead." }
-        return if (isMutable) """
-            |$name: ${type.pythonName} = $value
-        """.trimMargin() else """
-            |__$name: ${type.pythonName} = $value
-            |def _$name():
-            |   return __$name
-        """.trimMargin()
-    }
+    override fun toCode() = if (isMutable) """
+        |$name: ${type.pythonName} = $value
+    """.trimMargin() else """
+        |__$name: ${type.pythonName} = $value
+        |def _$name():
+        |   return __$name
+    """.trimMargin()
 
-
-    fun toMemberDeclaration(): String {
-        require(isClassProperty) { "Property '$name' seems to be a class property, use toMemberDeclarationCode() instead." }
-        TODO()
-        return """
-            |
-        """.trimMargin()
-    }
-
-    fun toPropertyCode(): String {
-        require(isClassProperty) { "Property '$name' does not seem to be a class property, use toCode() instead." }
-        return """
-            |@property
-            |def $name(self):
-            |   return self._$name
-            |   
-        """.appendIf(isMutable) { """
-            |@$name.setter
-            |def $name(self, value):
-            |    self._$name = value
-            |    
-        """ }.trimMargin()
-    }
-
-    private val isClassProperty get() = (this.parent is ClassDeclarationNode)
-    private val isMutable = this.symbol.isMutable
-    private val type = this.symbol.type
-    private val name = this.symbol.name
+    protected val isMutable = this.symbol.isMutable
+    protected val type = this.symbol.type
+    protected val name = this.symbol.name
 }

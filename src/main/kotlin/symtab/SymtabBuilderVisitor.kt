@@ -2,9 +2,7 @@ package symtab
 
 import kobraBaseVisitor
 import kobraParser.*
-import symtab.extensions.inferredType
-import symtab.extensions.isNotMember
-import symtab.extensions.mutability
+import symtab.extensions.*
 import type.TypeHierarchy
 import type.util.contains
 
@@ -19,16 +17,13 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
         return super.visitProgram(ctx)
     }
 
-    override fun visitClassDeclaration(ctx: ClassDeclarationContext): Any? {
-        val name = ctx.simpleIdentifier().text
-        val superClasses = ctx.delegationSpecifiers()?.delegationSpecifier()?.map { it.simpleIdentifier().text } ?: emptyList()
+    override fun visitClassDeclaration(ctx: ClassDeclarationContext): Any? = ctx.run {
+        if (className in typeHierarchy)
+            throw RuntimeException("Redefinition of class '$className'")
 
-        if (name in typeHierarchy)
-            throw RuntimeException("Redefinition of class '$name'")
+        typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
 
-        typeHierarchy.addType(name, baseClassNames = superClasses.toSet())
-
-        currentScope = Scope(parent = currentScope, name = name)
+        currentScope = Scope(parent = currentScope, name = className)
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             return it

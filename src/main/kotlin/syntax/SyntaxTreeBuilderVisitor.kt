@@ -1,9 +1,12 @@
 package syntax
 
 import kobraBaseVisitor
-import kobraParser.ProgramContext
-import kobraParser.PropertyDeclarationContext
+import kobraParser.*
 import symtab.Scope
+import symtab.extensions.className
+import symtab.extensions.isMember
+import syntax.node.ClassDeclarationNode
+import syntax.node.ClassPropertyDeclarationNode
 import syntax.node.PropertyDeclarationNode
 
 // feltételezzük, hogy az ast helyes
@@ -25,8 +28,45 @@ class SyntaxTreeBuilderVisitor(
         val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
         val value = ctx.expression().text
 
-        currentNode.addChild(PropertyDeclarationNode(symbol, value, currentNode))
+        PropertyDeclarationNode(symbol, value, currentNode).let {
+            currentNode.addChild(it)
+        }
+
         return super.visitPropertyDeclaration(ctx)
+    }
+
+    override fun visitClassDeclaration(ctx: ClassDeclarationContext): Any? {
+        ClassDeclarationNode(ctx, currentNode).let {
+            currentNode.addChild(it)
+            currentNode = it
+        }
+        currentScope = currentScope.children.first { it.name == ctx.className }
+        super.visitClassDeclaration(ctx).also {
+            currentScope = currentScope.parent!!
+            currentNode = currentNode.parent!!
+            return it
+        }
+    }
+
+    override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext): Any? {
+        currentScope = currentScope.children.first { it.name == "Primary constructor" }
+        super.visitPrimaryConstructor(ctx).also {
+            currentScope = currentScope.parent!!
+            return it
+        }
+    }
+
+    override fun visitClassParameter(ctx: ClassParameterContext): Any? = ctx.run {
+        val name = simpleIdentifier().text
+        val value = this.expression()?.text
+        val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
+
+        if (isMember) {
+            currentNode.addChild(ClassPropertyDeclarationNode(symbol, value, currentNode))
+        } else {
+            // todo: constructor parameter
+        }
+        return super.visitClassParameter(this)
     }
 }
 
