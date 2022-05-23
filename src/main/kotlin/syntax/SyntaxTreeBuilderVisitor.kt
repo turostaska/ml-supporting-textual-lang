@@ -28,9 +28,10 @@ class SyntaxTreeBuilderVisitor(
         val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
         val value = ctx.expression().text
 
-        PropertyDeclarationNode(symbol, value, currentNode).let {
-            currentNode.addChild(it)
-        }
+        if (currentScope.name.contains("Class declaration"))
+            ClassPropertyDeclarationNode(symbol, value, currentNode, false).let { currentNode.addChild(it) }
+        else
+            PropertyDeclarationNode(symbol, value, currentNode).let { currentNode.addChild(it) }
 
         return super.visitPropertyDeclaration(ctx)
     }
@@ -40,7 +41,7 @@ class SyntaxTreeBuilderVisitor(
             currentNode.addChild(it)
             currentNode = it
         }
-        currentScope = currentScope.children.first { it.name == ctx.className }
+        currentScope = currentScope.children.first { it.name == "Class declaration of ${ctx.className}" }
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             currentNode = currentNode.parent!!

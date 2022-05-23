@@ -18,5 +18,5 @@ open class PropertyDeclarationNode(
 
     protected val isMutable = this.symbol.isMutable
     protected val type = this.symbol.type
-    protected val name = this.symbol.name
+    val name = this.symbol.name
 }

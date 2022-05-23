@@ -8,13 +8,14 @@ class ClassPropertyDeclarationNode(
     symbol: Symbol,
     value: String? = null,
     parent: SyntaxTreeNode,
+    val isConstructorParameter: Boolean = true,
 ) : PropertyDeclarationNode(symbol, value, parent) {
     override fun toCode(): String {
         throw RuntimeException("toCode() shouldn't be used on an instance of ClassPropertyDeclarationNode")
     }
 
     fun toMemberDeclaration() = """
-        |self.$name = $value
+        |self.$name = ${if (isConstructorParameter) name else value}
     """.trimMargin()
 
     fun toPropertyCode() = """

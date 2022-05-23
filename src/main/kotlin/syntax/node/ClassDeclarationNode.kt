@@ -16,6 +16,7 @@ class ClassDeclarationNode(
     private val name = ctx.className
     private val superClasses = ctx.superClasses
     private val members get() = children.filterIsInstance<ClassPropertyDeclarationNode>()
+    private val constructorParameterMembers get() = members.filter { it.isConstructorParameter }
 
     // todo: check member functions
     private val isEmpty get() = members.isEmpty()
@@ -46,11 +47,15 @@ class ClassDeclarationNode(
 
     // todo: constructor parameters
     private val constructorCode get() = takeIf(members.any()) { """
-            |def __init__(self):
+            |def __init__(self, $constructorParameters):
             |    ${members.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
             |    
         """.trimMargin()
     }
+
+    private val constructorParameters get() = """
+        |${constructorParameterMembers.joinToString(separator = System.lineSeparator()) { it.name }}
+    """.trimMargin()
 
     private val propertyDeclarationCode get() = """
         |${members.joinToString(separator = System.lineSeparator()) { it.toPropertyCode() }}

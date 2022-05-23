@@ -26,7 +26,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
 
         typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
 
-        currentScope = Scope(parent = currentScope, name = className)
+        currentScope = Scope(parent = currentScope, name = "Class declaration of $className")
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             return it
@@ -45,7 +45,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
         val name = simpleIdentifier().text
         val type = this.type().text
 
-        if (expression().inferredType.isNotSubtypeOf(type))
+        if (expression()?.inferredType?.isNotSubtypeOf(type) == true)
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
         if (isNotMember) {

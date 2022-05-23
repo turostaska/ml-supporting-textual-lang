@@ -7,7 +7,6 @@ import util.Resources
 
 val symtabBuilder = SymtabBuilderVisitor()
 
-// todo: dipterv portálra máj. 20. tartalomjegyzék
 fun main() {
     val code = Resources.read("basic_class_declaration")
     val lexer = kobraLexer(CharStreams.fromString(code))
