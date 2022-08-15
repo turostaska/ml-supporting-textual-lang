@@ -1,3 +1,3 @@
 
-rootProject.name = "antrl-test"
+rootProject.name = "kobra"
 

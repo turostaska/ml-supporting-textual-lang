@@ -1,13 +1,13 @@
 package symtab.extensions
 
-import kobraParser.ClassParameterContext
+import com.kobra.kobraParser
 import symtab.Symbol.Mutability.VAR
 import symtab.Symbol.Mutability.valueOf
 
-val ClassParameterContext.isMember get() = (VAL() != null || VAR() != null)
+val kobraParser.ClassParameterContext.isMember get() = (VAL() != null || VAR() != null)
 
-val ClassParameterContext.isNotMember get() = !isMember
+val kobraParser.ClassParameterContext.isNotMember get() = !isMember
 
-val ClassParameterContext.mutability: String get() = VAL()?.text.orEmpty() + VAR()?.text.orEmpty()
+val kobraParser.ClassParameterContext.mutability: String get() = VAL()?.text.orEmpty() + VAR()?.text.orEmpty()
 
-val ClassParameterContext.isMutable get() = (valueOf(mutability.uppercase()) == VAR)
+val kobraParser.ClassParameterContext.isMutable get() = (valueOf(mutability.uppercase()) == VAR)

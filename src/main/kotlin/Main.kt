@@ -1,3 +1,5 @@
+import com.kobra.kobraLexer
+import com.kobra.kobraParser
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import symtab.SymtabBuilderVisitor

@@ -1,9 +1,9 @@
 package symtab.extensions
 
-import kobraParser.ClassDeclarationContext
+import com.kobra.kobraParser
 
-val ClassDeclarationContext.className get() = this.simpleIdentifier().text
+val kobraParser.ClassDeclarationContext.className get() = this.simpleIdentifier().text
     ?: throw RuntimeException("Class name can't be null")
 
-val ClassDeclarationContext.superClasses get() =
+val kobraParser.ClassDeclarationContext.superClasses get() =
     this.delegationSpecifiers()?.delegationSpecifier()?.map { it.simpleIdentifier().text } ?: emptyList()

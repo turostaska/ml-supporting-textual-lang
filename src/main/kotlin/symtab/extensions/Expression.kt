@@ -1,6 +1,6 @@
 package symtab.extensions
 
-import kobraParser.ExpressionContext
+import com.kobra.kobraParser.ExpressionContext
 import type.TypeNames.BOOLEAN
 import type.TypeNames.INT
 import type.TypeNames.NOTHING_N

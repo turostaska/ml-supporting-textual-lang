@@ -1,13 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.7.10"
     application
     antlr
     idea
 }
 
-group = "me.albert"
+group = "com.kobra"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -15,18 +15,27 @@ repositories {
     mavenCentral()
 }
 
-val langPath = "src/main/java/"
+val packageName = "com.kobra"
+val outputPath = "src/main/java/${packageName.replace('.', '/')}"
 tasks.generateGrammarSource {
+    source = project.objects
+        .sourceDirectorySet("antlr", "antlr")
+        .srcDir("src/main/antlr").apply {
+            include("kobra.g4")
+        }
     maxHeapSize = "64m"
-    outputDirectory = File(langPath)
-    arguments = listOf("-visitor", "-listener")
+    outputDirectory = File(outputPath)
+    arguments = listOf(
+        "-visitor",
+        "-listener",
+        "-package", packageName,
+    )
 }
 
 configure<SourceSetContainer> {
     named("main") {
         withConvention(org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet::class) {
-            // kotlin.srcDir("build/generated-src/antlr/main")
-            kotlin.srcDir(langPath)
+            kotlin.srcDir("src/main/java")
             kotlin.srcDir("src/main/kotlin")
         }
     }
@@ -36,7 +45,7 @@ tasks.getByName("compileKotlin").dependsOn("generateGrammarSource")
 
 dependencies {
     testImplementation(kotlin("test"))
-    antlr("org.antlr:antlr4:4.9.3")
+    antlr("org.antlr:antlr4:4.10.1")
 }
 
 tasks.test {
@@ -44,13 +53,12 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile>() {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = "16"
 }
 
 buildscript {
     dependencies {
-        // add the plugin to the classpath
-        classpath("org.antlr:antlr4:4.9.3")
+        classpath("org.antlr:antlr4:4.10.1")
     }
 }
 

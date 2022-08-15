@@ -1,7 +1,7 @@
 package symtab
 
-import kobraBaseVisitor
-import kobraParser.*
+import com.kobra.kobraBaseVisitor
+import com.kobra.kobraParser.*
 import symtab.extensions.*
 import type.TypeHierarchy
 import type.util.asType

@@ -1,6 +1,6 @@
 package syntax.node
 
-import kobraParser
+import com.kobra.kobraParser
 import symtab.extensions.className
 import symtab.extensions.superClasses
 import syntax.SyntaxTreeNode
