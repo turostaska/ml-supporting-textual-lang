@@ -54,7 +54,7 @@ class ClassDeclarationNode(
     }
 
     private val constructorParameters get() = """
-        |${constructorParameterMembers.joinToString(separator = System.lineSeparator()) { it.name }}
+        |${constructorParameterMembers.joinToString(separator = ", ") { it.name }}
     """.trimMargin()
 
     private val propertyDeclarationCode get() = """
