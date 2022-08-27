@@ -12,18 +12,18 @@ import syntax.node.PropertyDeclarationNode
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
     private val globalScope: Scope,
-): kobraBaseVisitor<Any>() {
+): kobraBaseVisitor<Unit>() {
     val syntaxTree = SyntaxTree()
     private lateinit var currentNode: SyntaxTreeNode
     private lateinit var currentScope: Scope // todo: kipróbálni nélküle
 
-    override fun visitProgram(ctx: kobraParser.ProgramContext): Any? {
+    override fun visitProgram(ctx: kobraParser.ProgramContext) {
         currentNode = syntaxTree.root
         currentScope = globalScope
-        return super.visitProgram(ctx)
+        super.visitProgram(ctx)
     }
 
-    override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext): Any? {
+    override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {
         val name = ctx.simpleIdentifier().text
         val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
         val value = ctx.expression().text
@@ -33,10 +33,10 @@ class SyntaxTreeBuilderVisitor(
         else
             PropertyDeclarationNode(symbol, value, currentNode).let { currentNode.addChild(it) }
 
-        return super.visitPropertyDeclaration(ctx)
+        super.visitPropertyDeclaration(ctx)
     }
 
-    override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext): Any? {
+    override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {
         ClassDeclarationNode(ctx, currentNode).let {
             currentNode.addChild(it)
             currentNode = it
@@ -45,19 +45,17 @@ class SyntaxTreeBuilderVisitor(
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             currentNode = currentNode.parent!!
-            return it
         }
     }
 
-    override fun visitPrimaryConstructor(ctx: kobraParser.PrimaryConstructorContext): Any? {
+    override fun visitPrimaryConstructor(ctx: kobraParser.PrimaryConstructorContext) {
         currentScope = currentScope.children.first { it.name == "Primary constructor" }
         super.visitPrimaryConstructor(ctx).also {
             currentScope = currentScope.parent!!
-            return it
         }
     }
 
-    override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Any? = ctx.run {
+    override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
         val value = this.expression()?.text
         val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
@@ -67,7 +65,7 @@ class SyntaxTreeBuilderVisitor(
         } else {
             // todo: constructor parameter
         }
-        return super.visitClassParameter(this)
+        super.visitClassParameter(this)
     }
 }
 

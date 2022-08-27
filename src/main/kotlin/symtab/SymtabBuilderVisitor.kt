@@ -10,17 +10,17 @@ import type.util.find
 import type.util.findInSubtree
 
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
-class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
+class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     private lateinit var currentScope: Scope
     val globalScope = Scope(parent = null)
     val typeHierarchy = TypeHierarchy()
 
-    override fun visitProgram(ctx: ProgramContext): Any? {
+    override fun visitProgram(ctx: ProgramContext) {
         currentScope = globalScope
-        return super.visitProgram(ctx)
+        super.visitProgram(ctx)
     }
 
-    override fun visitClassDeclaration(ctx: ClassDeclarationContext): Any? = ctx.run {
+    override fun visitClassDeclaration(ctx: ClassDeclarationContext): Unit = ctx.run {
         if (className in typeHierarchy)
             throw RuntimeException("Redefinition of class '$className'")
 
@@ -29,19 +29,17 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
         currentScope = Scope(parent = currentScope, name = "Class declaration of $className")
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
-            return it
         }
     }
 
-    override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext): Any? {
+    override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext) {
         currentScope = Scope(parent = currentScope, name = "Primary constructor")
         super.visitPrimaryConstructor(ctx).also {
             currentScope = currentScope.parent!!
-            return it
         }
     }
 
-    override fun visitClassParameter(ctx: ClassParameterContext): Any? = ctx.run {
+    override fun visitClassParameter(ctx: ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
         val type = this.type().text
 
@@ -56,10 +54,10 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
             // A class member, we add it to the class scope
             currentScope.parent!![name] = Symbol(name, type, this.mutability, typeHierarchy)
         }
-        return super.visitClassParameter(this)
+        super.visitClassParameter(this)
     }
 
-    override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Any? = ctx.run {
+    override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Unit = ctx.run {
         val name = simpleIdentifier().text
         val type = type()?.text ?: expression().inferredType
 
@@ -67,7 +65,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Any>() {
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
         currentScope[name] = Symbol(name, type, this.mutability, typeHierarchy)
-        return super.visitPropertyDeclaration(this)
+        super.visitPropertyDeclaration(this)
     }
 
     private fun String.subtypeOf(other: String) =
