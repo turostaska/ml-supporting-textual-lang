@@ -95,12 +95,102 @@ constructorInvocation
 
 // SECTION: expressions
 
-expression // todo
-    : simpleIdentifier
-    | IntegerLiteral
-    | BooleanLiteral
-    | NullLiteral
-    | StringLiteral
+expression
+    : disjunction
+    ;
+
+disjunction
+    : conjunction (NL* DISJ NL* conjunction)*
+    ;
+
+conjunction
+    : equality (NL* CONJ NL* equality)*
+    ;
+
+equality
+    : comparison (equalityOperator NL* comparison)*
+    ;
+
+comparison
+    : genericCallLikeComparison (comparisonOperator NL* genericCallLikeComparison)*
+    ;
+
+genericCallLikeComparison
+    : infixOperation
+    ;
+
+infixOperation
+    : elvisExpression (inOperator NL* elvisExpression | isOperator NL* type)*
+    ;
+
+elvisExpression
+    : infixFunctionCall (NL* elvis NL* infixFunctionCall)*
+    ;
+
+infixFunctionCall
+    : rangeExpression (simpleIdentifier NL* rangeExpression)*
+    ;
+
+rangeExpression
+    : additiveExpression (RANGE NL* additiveExpression)*
+    ;
+
+additiveExpression
+    : multiplicativeExpression (additiveOperator NL* multiplicativeExpression)*
+    ;
+
+multiplicativeExpression
+    : asExpression (multiplicativeOperator NL* asExpression)*
+    ;
+
+asExpression
+    : prefixUnaryExpression (NL* asOperator NL* type)*
+    ;
+
+prefixUnaryExpression
+    : unaryPrefix* postfixUnaryExpression
+    ;
+
+elvis
+    : QUEST_NO_WS COLON
+    ;
+
+equalityOperator
+    : EXCL_EQ
+    | EQEQ
+    ;
+
+comparisonOperator
+    : LANGLE
+    | RANGLE
+    | LE
+    | GE
+    ;
+
+inOperator
+    : IN
+    | NOT_IN
+    ;
+
+isOperator
+    : IS
+    | NOT_IS
+    ;
+
+asOperator
+    : AS
+    | AS_SAFE
+    ;
+
+additiveOperator
+    : ADD
+    | SUB
+    ;
+
+multiplicativeOperator
+    : MULT
+    | DIV
+    | MOD
     ;
 
 // SECTION: types
@@ -144,6 +234,12 @@ CATCH: 'catch';
 FINALLY: 'finally';
 FOR: 'for';
 RETURN: 'return';
+IS: 'is';
+IN: 'in';
+NOT_IS: '!is' (Hidden | NL);
+NOT_IN: '!in' (Hidden | NL);
+AS: 'as';
+AS_SAFE: 'as?';
 
 // SECTION: lexicalModifiers
 
@@ -163,21 +259,41 @@ RCURL: '}';
 COMMA: ',';
 COLON: ':';
 ASSIGNMENT: '=';
-QUEST: '?';
+QUEST: '?' Hidden;
 CONJ: '&&';
 DISJ: '||';
 SEMICOLON: ';';
 DOT: '.';
 QUOTE: '"';
+EQEQ: '==';
+EXCL_EQ: '!=';
+LANGLE: '<';
+RANGLE: '>';
+LE: '<=';
+GE: '>=';
+QUEST_NO_WS: '?';
+ADD: '+';
+SUB: '-';
+MULT: '*';
+DIV: '/';
+MOD: '%';
 
 NL: '\n' | '\r' '\n'?;
+
+fragment Hidden: DelimitedComment | LineComment | WS;
+
 
 LineComment
     : '//' ~[\r\n]*
       -> channel(HIDDEN)
     ;
 
-WS	: 	(' '| '\t') -> skip
+DelimitedComment
+    : '/*' ( DelimitedComment | . )*? '*/'
+      -> channel(HIDDEN)
+    ;
+
+WS	: 	(' '| '\t' | '\u000C') -> skip
 	;
 
 // SECTION: lexicalIdentifiers
