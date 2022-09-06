@@ -20,6 +20,10 @@ functionDeclaration // todo: modifiers
     : FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
     ;
 
+variableDeclaration
+    : simpleIdentifier (NL* COLON NL* type)?
+    ;
+
 functionBody
     : block
     | ASSIGNMENT NL* expression
@@ -151,6 +155,117 @@ prefixUnaryExpression
     : unaryPrefix* postfixUnaryExpression
     ;
 
+postfixUnaryExpression
+    : primaryExpression postfixUnarySuffix*
+    ;
+
+postfixUnarySuffix // todo
+    : postfixUnaryOperator
+    ;
+
+unaryPrefix
+    : prefixUnaryOperator NL*
+    ;
+
+primaryExpression
+    : parenthesizedExpression
+    | simpleIdentifier
+    | literalConstant
+    | stringLiteral
+    | collectionLiteral
+    | thisExpression
+    | superExpression
+    | ifExpression
+    | whenExpression
+    | tryExpression
+    | jumpExpression
+    ;
+
+parenthesizedExpression
+    : LPAREN NL* expression NL* RPAREN
+    ;
+
+literalConstant
+    : BooleanLiteral
+    | IntegerLiteral
+    | CharacterLiteral
+    | NullLiteral
+    ;
+
+stringLiteral
+    : StringLiteral
+    ;
+
+collectionLiteral
+    : LSQUARE NL* (expression (NL* COMMA NL* expression)* (NL* COMMA)? NL*)? RSQUARE
+    ;
+
+thisExpression
+    : THIS
+    ;
+
+superExpression
+    : SUPER (LANGLE NL* type NL* RANGLE)?
+    ;
+
+ifExpression
+    : IF NL* LPAREN NL* expression NL* RPAREN NL*
+      ( controlStructureBody
+      | controlStructureBody? NL* SEMICOLON? NL* ELSE NL* (controlStructureBody | SEMICOLON)
+      | SEMICOLON)
+    ;
+
+controlStructureBody
+    : block
+    | statement
+    ;
+
+whenExpression
+    : WHEN NL* whenSubject? NL* LCURL NL* (whenEntry NL*)* NL* RCURL
+    ;
+
+whenSubject
+    : LPAREN (NL* VAL NL* variableDeclaration NL* ASSIGNMENT NL*)? expression RPAREN
+    ;
+
+whenEntry
+    : whenCondition (NL* COMMA NL* whenCondition)* (NL* COMMA)? NL* ARROW NL* controlStructureBody semi?
+    | ELSE NL* ARROW NL* controlStructureBody semi?
+    ;
+
+whenCondition
+    : expression
+    | rangeTest
+    | typeTest
+    ;
+
+rangeTest
+    : inOperator NL* expression
+    ;
+
+typeTest
+    : isOperator NL* type
+    ;
+
+tryExpression
+    : TRY NL* block ((NL* catchBlock)+ (NL* finallyBlock)? | NL* finallyBlock)
+    ;
+
+catchBlock
+    : CATCH NL* LPAREN simpleIdentifier COLON type (NL* COMMA)? RPAREN NL* block
+    ;
+
+finallyBlock
+    : FINALLY NL* block
+    ;
+
+jumpExpression
+    : THROW NL* expression
+    | RETURN expression?
+    | CONTINUE
+    | BREAK
+    ;
+
 elvis
     : QUEST_NO_WS COLON
     ;
@@ -193,6 +308,27 @@ multiplicativeOperator
     | MOD
     ;
 
+prefixUnaryOperator
+    : SUB
+    | ADD
+    | excl
+    ;
+
+postfixUnaryOperator
+    : INCR
+    | DECR
+    | EXCL_NO_WS
+    ;
+
+excl
+    : EXCL_NO_WS
+    | EXCL_WS
+    ;
+
+semi
+    : (SEMICOLON | NL) NL*
+    ;
+
 // SECTION: types
 
 type
@@ -220,6 +356,10 @@ StringLiteral
     : STRING
     ;
 
+CharacterLiteral
+    : '\'' (~[\n\r'\\]) '\''
+    ;
+
 // SECTION: keywords
 
 IMPORT: 'import';
@@ -240,6 +380,12 @@ NOT_IS: '!is' (Hidden | NL);
 NOT_IN: '!in' (Hidden | NL);
 AS: 'as';
 AS_SAFE: 'as?';
+THIS: 'this';
+SUPER: 'super';
+THROW: 'throw';
+CONTINUE: 'continue';
+BREAK: 'break';
+WHEN: 'when';
 
 // SECTION: lexicalModifiers
 
@@ -277,6 +423,14 @@ SUB: '-';
 MULT: '*';
 DIV: '/';
 MOD: '%';
+INCR: '++';
+DECR: '--';
+EXCL_WS: '!' Hidden;
+EXCL_NO_WS: '!';
+ARROW: '->';
+LSQUARE: '['; // todo
+RSQUARE: ']';
+RANGE: '..';
 
 NL: '\n' | '\r' '\n'?;
 
