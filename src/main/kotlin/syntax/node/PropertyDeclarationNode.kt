@@ -1,11 +1,13 @@
 package syntax.node
 
-import symtab.Symbol
+import symtab.VariableSymbol
 import syntax.SyntaxTreeNode
+import type.Type
 
 open class PropertyDeclarationNode(
-    private val symbol: Symbol,
+    private val symbol: VariableSymbol,
     protected val value: String?, // todo
+    private val type: Type,
     parent: SyntaxTreeNode,
 ): SyntaxTreeNode(_parent = parent) {
     override fun toCode() = if (isMutable) """
@@ -17,6 +19,5 @@ open class PropertyDeclarationNode(
     """.trimMargin()
 
     protected val isMutable = this.symbol.isMutable
-    protected val type = this.symbol.type
     val name = this.symbol.name
 }

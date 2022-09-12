@@ -36,6 +36,8 @@ class Scope(
         }
     }
 
+    operator fun plusAssign(symbol: Symbol) = this.add(symbol)
+
     val isGlobal
         get() = (parent == null)
 

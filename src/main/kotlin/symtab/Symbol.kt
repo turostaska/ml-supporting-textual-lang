@@ -4,7 +4,7 @@ import type.TypeNames
 
 val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
 
-val String.asMutability get() = Mutability.valueOf(this.uppercase())
+fun String.getAsMutability() = Mutability.valueOf(this.uppercase())
 
 // todo: TypeSymbol
 // todo: add built in types to global scope

@@ -11,13 +11,13 @@ import type.TypeNames.STRING
 import type.TypeNames.UNIT
 import util.second
 
-val PrimaryExpressionContext.isBoolean get() = (this.literalConstant().BooleanLiteral() != null)
+val PrimaryExpressionContext.isBoolean get() = (this.literalConstant()?.BooleanLiteral() != null)
 
 val PrimaryExpressionContext.isString get() = (this.stringLiteral() != null)
 
-val PrimaryExpressionContext.isInt get() = (this.literalConstant().IntegerLiteral() != null)
+val PrimaryExpressionContext.isInt get() = (this.literalConstant()?.IntegerLiteral() != null)
 
-val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant().NullLiteral() != null)
+val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant()?.NullLiteral() != null)
 
 val PrimaryExpressionContext.inferredType
     get() = when {

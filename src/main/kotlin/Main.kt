@@ -17,7 +17,7 @@ fun main() {
 
     symtabBuilder.visit(program)
 
-    val syntaxTreeBuilder = SyntaxTreeBuilderVisitor(symtabBuilder.globalScope).also {
+    val syntaxTreeBuilder = SyntaxTreeBuilderVisitor(symtabBuilder.globalScope, symtabBuilder.typeHierarchy).also {
         it.visit(program)
     }
 

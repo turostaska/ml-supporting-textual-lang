@@ -50,10 +50,10 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (isNotMember) {
             // We are in constructor scope, so we add the symbol to the symtab
             // todo: assert type of scope
-            currentScope[name] = VariableSymbol(name, type, Mutability.VAL)
+            currentScope += VariableSymbol(name, type, Mutability.VAL)
         } else {
             // A class member, we add it to the class scope
-            currentScope.parent!![name] = VariableSymbol(name, type, Mutability.valueOf(this.mutability))
+            currentScope.parent!! += VariableSymbol(name, type, this.mutability.getAsMutability())
         }
         super.visitClassParameter(this)
     }
@@ -65,7 +65,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (expression().inferredType.isNotSubtypeOf(type))
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
-        currentScope[name] = VariableSymbol(name, type, Mutability.valueOf(this.mutability))
+        currentScope += VariableSymbol(name, type, this.mutability.getAsMutability())
         super.visitPropertyDeclaration(this)
     }
 
