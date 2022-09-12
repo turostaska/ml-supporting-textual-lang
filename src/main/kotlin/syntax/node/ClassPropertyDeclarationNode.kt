@@ -17,7 +17,7 @@ class ClassPropertyDeclarationNode(
     }
 
     fun toMemberDeclaration() = """
-        |self.$name = ${if (isConstructorParameter) name else value}
+        |self._$name = ${if (isConstructorParameter) name else value}
     """.trimMargin()
 
     fun toPropertyCode() = """
