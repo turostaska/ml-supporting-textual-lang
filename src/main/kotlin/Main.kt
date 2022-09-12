@@ -10,7 +10,7 @@ import util.Resources
 val symtabBuilder = SymtabBuilderVisitor()
 
 fun main() {
-    val code = Resources.read("basic_class_declaration")
+    val code = Resources.read("expressions")
     val lexer = kobraLexer(CharStreams.fromString(code))
     val tokens = CommonTokenStream(lexer)
     val program = kobraParser(tokens).program()

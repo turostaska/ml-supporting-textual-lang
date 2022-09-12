@@ -29,7 +29,7 @@ class SyntaxTreeBuilderVisitor(
     override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {
         val name = ctx.simpleIdentifier().text
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
-        val value = ctx.expression().text
+        val value = ctx.expression()
         val type = typeHierarchy.find(symbol.type)
 
         if (currentScope.name.contains("Class declaration"))
@@ -63,7 +63,7 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val value = this.expression()?.text
+        val value = this.expression()
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
         val type = typeHierarchy.find(symbol.type)
 

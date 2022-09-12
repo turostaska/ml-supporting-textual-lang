@@ -1,13 +1,15 @@
 package syntax.node
 
+import com.kobra.kobraParser.ExpressionContext
 import symtab.VariableSymbol
 import syntax.SyntaxTreeNode
+import syntax.expression.toPythonCode
 import type.Type
 import util.appendIf
 
 class ClassPropertyDeclarationNode(
     symbol: VariableSymbol,
-    value: String? = null,
+    value: ExpressionContext? = null,
     type: Type,
     parent: SyntaxTreeNode,
     val isConstructorParameter: Boolean = true,
@@ -17,7 +19,11 @@ class ClassPropertyDeclarationNode(
     }
 
     fun toMemberDeclaration() = """
-        |self._$name = ${if (isConstructorParameter) name else value}
+        |self._$name = ${
+        if (isConstructorParameter)
+            name
+        else value?.toPythonCode() ?: throw RuntimeException("Property has no value")
+    }
     """.trimMargin()
 
     fun toPropertyCode() = """
