@@ -6,19 +6,34 @@ class Scope(
     val parent: Scope? = null,
     val children: MutableList<Scope> = mutableListOf(),
     val name: String = if (parent == null) "Global scope" else "Scope ${serial++}",
-    private val map: MutableMap<String, Symbol> = hashMapOf(),
-): MutableMap<String, Symbol> by map {
+    private val symbols: MutableSet<Symbol> = mutableSetOf(),
+) {
     init {
         parent?.children?.add(this)
     }
 
-    override fun get(key: String): Symbol? = map[key] ?: this.parent?.get(key)
+    fun resolveMethod(name: String): MethodSymbol? =
+        symbols.find { it.name == name && it is MethodSymbol } as? MethodSymbol
+            ?: this.parent?.resolveMethod(name)
 
-    override fun put(key: String, value: Symbol): Symbol? {
-        if (map.containsKey(key))
-            println("Name $key is already in scope.")
+    fun resolveVariable(name: String): VariableSymbol? =
+        symbols.find { it.name == name && it is VariableSymbol } as? VariableSymbol
+            ?: this.parent?.resolveVariable(name)
 
-        return map.put(key, value)
+    fun add(symbol: Symbol) {
+        symbols += when (symbol) {
+            is MethodSymbol -> {
+                if (symbols.find { it.name == name && it is MethodSymbol } != null)
+                    throw RuntimeException("Redefinition of function ${symbol.name} in scope ${this.name}")
+                symbol
+            }
+
+            is VariableSymbol -> {
+                if (symbols.find { it.name == name && it is VariableSymbol } != null)
+                    throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
+                symbol
+            }
+        }
     }
 
     val isGlobal
@@ -31,7 +46,7 @@ class Scope(
         sb.appendLine("---------------")
         sb.appendLine(name)
         sb.appendLine("---------------")
-        map.values.forEach { sb.appendLine((it.toString())) }
+        symbols.forEach { sb.appendLine((it.toString())) }
         sb.appendLine("---------------")
         sb.appendLine()
 

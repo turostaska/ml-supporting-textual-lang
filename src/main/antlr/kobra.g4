@@ -161,6 +161,7 @@ postfixUnaryExpression
 
 postfixUnarySuffix // todo
     : postfixUnaryOperator
+    | callSuffix
     ;
 
 unaryPrefix
@@ -188,7 +189,6 @@ parenthesizedExpression
 literalConstant
     : BooleanLiteral
     | IntegerLiteral
-    | CharacterLiteral
     | NullLiteral
     ;
 
@@ -264,6 +264,18 @@ jumpExpression
     | RETURN expression?
     | CONTINUE
     | BREAK
+    ;
+
+callSuffix
+    : valueArguments
+    ;
+
+valueArguments
+    : LPAREN NL* (valueArgument (NL* COMMA NL* valueArgument)* (NL* COMMA)? NL*)? RPAREN
+    ;
+
+valueArgument
+    : (simpleIdentifier NL* ASSIGNMENT NL*)? MULT? NL* expression
     ;
 
 elvis
@@ -354,10 +366,6 @@ IntegerLiteral
 
 StringLiteral
     : STRING
-    ;
-
-CharacterLiteral
-    : '\'' (~[\n\r'\\]) '\''
     ;
 
 // SECTION: keywords

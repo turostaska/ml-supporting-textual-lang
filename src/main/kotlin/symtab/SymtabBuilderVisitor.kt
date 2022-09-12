@@ -11,9 +11,10 @@ import type.util.findInSubtree
 
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
 class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
-    private lateinit var currentScope: Scope
+    lateinit var currentScope: Scope
     val globalScope = Scope(parent = null)
     val typeHierarchy = TypeHierarchy()
+    private val typeInference = TypeInference(this)
 
     override fun visitProgram(ctx: ProgramContext) {
         currentScope = globalScope
@@ -49,10 +50,10 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (isNotMember) {
             // We are in constructor scope, so we add the symbol to the symtab
             // todo: assert type of scope
-            currentScope[name] = Symbol(name, type, mutable = false, typeHierarchy)
+            currentScope[name] = VariableSymbol(name, type, Mutability.VAL)
         } else {
             // A class member, we add it to the class scope
-            currentScope.parent!![name] = Symbol(name, type, this.mutability, typeHierarchy)
+            currentScope.parent!![name] = VariableSymbol(name, type, Mutability.valueOf(this.mutability))
         }
         super.visitClassParameter(this)
     }
@@ -64,7 +65,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (expression().inferredType.isNotSubtypeOf(type))
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
-        currentScope[name] = Symbol(name, type, this.mutability, typeHierarchy)
+        currentScope[name] = VariableSymbol(name, type, Mutability.valueOf(this.mutability))
         super.visitPropertyDeclaration(this)
     }
 
@@ -72,4 +73,6 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         typeHierarchy.find(other).findInSubtree(this.asType()) != null
 
     private fun String.isNotSubtypeOf(other: String) = !this.subtypeOf(other)
+
+    private val ExpressionContext.inferredType get() = typeInference.inferType(this)
 }
