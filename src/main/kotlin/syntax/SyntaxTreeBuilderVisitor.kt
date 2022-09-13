@@ -8,10 +8,13 @@ import symtab.extensions.isMember
 import syntax.node.ClassDeclarationNode
 import syntax.node.ClassPropertyDeclarationNode
 import syntax.node.PropertyDeclarationNode
+import type.TypeHierarchy
+import type.util.find
 
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
     private val globalScope: Scope,
+    private val typeHierarchy: TypeHierarchy,
 ): kobraBaseVisitor<Unit>() {
     val syntaxTree = SyntaxTree()
     private lateinit var currentNode: SyntaxTreeNode
@@ -25,13 +28,16 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {
         val name = ctx.simpleIdentifier().text
-        val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
-        val value = ctx.expression().text
+        val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
+        val value = ctx.expression()
+        val type = typeHierarchy.find(symbol.type)
 
         if (currentScope.name.contains("Class declaration"))
-            ClassPropertyDeclarationNode(symbol, value, currentNode, false).let { currentNode.addChild(it) }
+            ClassPropertyDeclarationNode(symbol, value, type, currentNode, false).let {
+                currentNode.addChild(it)
+            }
         else
-            PropertyDeclarationNode(symbol, value, currentNode).let { currentNode.addChild(it) }
+            PropertyDeclarationNode(symbol, value, type, currentNode).let { currentNode.addChild(it) }
 
         super.visitPropertyDeclaration(ctx)
     }
@@ -57,11 +63,12 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val value = this.expression()?.text
-        val symbol = currentScope[name] ?: throw RuntimeException("Symbol '$name' not found.")
+        val value = this.expression()
+        val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
+        val type = typeHierarchy.find(symbol.type)
 
         if (isMember) {
-            currentNode.addChild(ClassPropertyDeclarationNode(symbol, value, currentNode))
+            currentNode.addChild(ClassPropertyDeclarationNode(symbol, value, type, currentNode))
         } else {
             // todo: constructor parameter
         }

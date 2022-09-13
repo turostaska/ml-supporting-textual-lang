@@ -1,0 +1,2 @@
+val a = true || false
+val b = true && false

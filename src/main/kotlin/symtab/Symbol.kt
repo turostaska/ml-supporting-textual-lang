@@ -1,46 +1,40 @@
 package symtab
 
-import type.Type
-import type.TypeHierarchy
-import type.util.find
+import type.TypeNames
 
-val Boolean.asMutability get() = if (this) Symbol.Mutability.VAR else Symbol.Mutability.VAL
+val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
 
-val String.asMutability get() = Symbol.Mutability.valueOf(this.uppercase())
+fun String.getAsMutability() = Mutability.valueOf(this.uppercase())
+
+// todo: TypeSymbol
+// todo: add built in types to global scope
+// todo: add custom classes to their current scopes
+sealed interface Symbol {
+    val name: String
+    val type: String
+}
 
 // todo: visibility
-class Symbol(
-    val name: String,
-    val type: Type,
+class VariableSymbol(
+    override val name: String,
+    override val type: String,
     val mutability: Mutability,
-) {
-    enum class Mutability {
-        VAR, VAL,
-    }
-
-    constructor(
-        name: String,
-        type: String,
-        mutability: String,
-        typeHierarchy: TypeHierarchy,
-    ) : this(
-        name = name,
-        type = typeHierarchy.find(type),
-        mutability = mutability.asMutability,
-    )
-
-    constructor(
-        name: String,
-        type: String,
-        mutable: Boolean,
-        typeHierarchy: TypeHierarchy,
-    ) : this(
-        name = name,
-        type = typeHierarchy.find(type),
-        mutability = mutable.asMutability,
-    )
-
-    override fun toString() = "${mutability.name} $name: $type"
+) : Symbol {
 
     val isMutable = (mutability == Mutability.VAR)
+    override fun toString() = "${mutability.name} $name: $type"
+}
+
+class MethodSymbol(
+    override val name: String,
+    val returnType: String?,
+    val params: List<String>,
+    val isInfix: Boolean = false,
+) : Symbol {
+    override val type: String
+        get() = "(${params.joinToString()}) -> ${returnType ?: TypeNames.UNIT}"
+
+    companion object {
+        fun fun0(name: String, returnType: String? = null) = MethodSymbol(name, returnType, emptyList())
+    }
 }

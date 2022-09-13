@@ -20,6 +20,10 @@ functionDeclaration // todo: modifiers
     : FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
     ;
 
+variableDeclaration
+    : simpleIdentifier (NL* COLON NL* type)?
+    ;
+
 functionBody
     : block
     | ASSIGNMENT NL* expression
@@ -95,12 +99,246 @@ constructorInvocation
 
 // SECTION: expressions
 
-expression // todo
-    : simpleIdentifier
+expression
+    : disjunction
+    ;
+
+disjunction
+    : conjunction (NL* DISJ NL* conjunction)*
+    ;
+
+conjunction
+    : equality (NL* CONJ NL* equality)*
+    ;
+
+equality
+    : comparison (equalityOperator NL* comparison)*
+    ;
+
+comparison
+    : genericCallLikeComparison (comparisonOperator NL* genericCallLikeComparison)*
+    ;
+
+genericCallLikeComparison
+    : infixOperation
+    ;
+
+infixOperation
+    : elvisExpression (inOperator NL* elvisExpression | isOperator NL* type)*
+    ;
+
+elvisExpression
+    : infixFunctionCall (NL* elvis NL* infixFunctionCall)*
+    ;
+
+infixFunctionCall
+    : rangeExpression (simpleIdentifier NL* rangeExpression)*
+    ;
+
+rangeExpression
+    : additiveExpression (RANGE NL* additiveExpression)*
+    ;
+
+additiveExpression
+    : multiplicativeExpression (additiveOperator NL* multiplicativeExpression)*
+    ;
+
+multiplicativeExpression
+    : asExpression (multiplicativeOperator NL* asExpression)*
+    ;
+
+asExpression
+    : prefixUnaryExpression (NL* asOperator NL* type)*
+    ;
+
+prefixUnaryExpression
+    : unaryPrefix* postfixUnaryExpression
+    ;
+
+postfixUnaryExpression
+    : primaryExpression postfixUnarySuffix*
+    ;
+
+postfixUnarySuffix // todo
+    : postfixUnaryOperator
+    | callSuffix
+    ;
+
+unaryPrefix
+    : prefixUnaryOperator NL*
+    ;
+
+primaryExpression
+    : parenthesizedExpression
+    | simpleIdentifier
+    | literalConstant
+    | stringLiteral
+    | collectionLiteral
+    | thisExpression
+    | superExpression
+    | ifExpression
+    | whenExpression
+    | tryExpression
+    | jumpExpression
+    ;
+
+parenthesizedExpression
+    : LPAREN NL* expression NL* RPAREN
+    ;
+
+literalConstant
+    : BooleanLiteral
     | IntegerLiteral
-    | BooleanLiteral
     | NullLiteral
-    | StringLiteral
+    ;
+
+stringLiteral
+    : StringLiteral
+    ;
+
+collectionLiteral
+    : LSQUARE NL* (expression (NL* COMMA NL* expression)* (NL* COMMA)? NL*)? RSQUARE
+    ;
+
+thisExpression
+    : THIS
+    ;
+
+superExpression
+    : SUPER (LANGLE NL* type NL* RANGLE)?
+    ;
+
+ifExpression
+    : IF NL* LPAREN NL* expression NL* RPAREN NL*
+      ( controlStructureBody
+      | controlStructureBody? NL* SEMICOLON? NL* ELSE NL* (controlStructureBody | SEMICOLON)
+      | SEMICOLON)
+    ;
+
+controlStructureBody
+    : block
+    | statement
+    ;
+
+whenExpression
+    : WHEN NL* whenSubject? NL* LCURL NL* (whenEntry NL*)* NL* RCURL
+    ;
+
+whenSubject
+    : LPAREN (NL* VAL NL* variableDeclaration NL* ASSIGNMENT NL*)? expression RPAREN
+    ;
+
+whenEntry
+    : whenCondition (NL* COMMA NL* whenCondition)* (NL* COMMA)? NL* ARROW NL* controlStructureBody semi?
+    | ELSE NL* ARROW NL* controlStructureBody semi?
+    ;
+
+whenCondition
+    : expression
+    | rangeTest
+    | typeTest
+    ;
+
+rangeTest
+    : inOperator NL* expression
+    ;
+
+typeTest
+    : isOperator NL* type
+    ;
+
+tryExpression
+    : TRY NL* block ((NL* catchBlock)+ (NL* finallyBlock)? | NL* finallyBlock)
+    ;
+
+catchBlock
+    : CATCH NL* LPAREN simpleIdentifier COLON type (NL* COMMA)? RPAREN NL* block
+    ;
+
+finallyBlock
+    : FINALLY NL* block
+    ;
+
+jumpExpression
+    : THROW NL* expression
+    | RETURN expression?
+    | CONTINUE
+    | BREAK
+    ;
+
+callSuffix
+    : valueArguments
+    ;
+
+valueArguments
+    : LPAREN NL* (valueArgument (NL* COMMA NL* valueArgument)* (NL* COMMA)? NL*)? RPAREN
+    ;
+
+valueArgument
+    : (simpleIdentifier NL* ASSIGNMENT NL*)? MULT? NL* expression
+    ;
+
+elvis
+    : QUEST_NO_WS COLON
+    ;
+
+equalityOperator
+    : EXCL_EQ
+    | EQEQ
+    ;
+
+comparisonOperator
+    : LANGLE
+    | RANGLE
+    | LE
+    | GE
+    ;
+
+inOperator
+    : IN
+    | NOT_IN
+    ;
+
+isOperator
+    : IS
+    | NOT_IS
+    ;
+
+asOperator
+    : AS
+    | AS_SAFE
+    ;
+
+additiveOperator
+    : ADD
+    | SUB
+    ;
+
+multiplicativeOperator
+    : MULT
+    | DIV
+    | MOD
+    ;
+
+prefixUnaryOperator
+    : SUB
+    | ADD
+    | excl
+    ;
+
+postfixUnaryOperator
+    : INCR
+    | DECR
+    | EXCL_NO_WS
+    ;
+
+excl
+    : EXCL_NO_WS
+    | EXCL_WS
+    ;
+
+semi
+    : (SEMICOLON | NL) NL*
     ;
 
 // SECTION: types
@@ -144,6 +382,18 @@ CATCH: 'catch';
 FINALLY: 'finally';
 FOR: 'for';
 RETURN: 'return';
+IS: 'is';
+IN: 'in';
+NOT_IS: '!is' (Hidden | NL);
+NOT_IN: '!in' (Hidden | NL);
+AS: 'as';
+AS_SAFE: 'as?';
+THIS: 'this';
+SUPER: 'super';
+THROW: 'throw';
+CONTINUE: 'continue';
+BREAK: 'break';
+WHEN: 'when';
 
 // SECTION: lexicalModifiers
 
@@ -163,21 +413,49 @@ RCURL: '}';
 COMMA: ',';
 COLON: ':';
 ASSIGNMENT: '=';
-QUEST: '?';
+QUEST: '?' Hidden;
 CONJ: '&&';
 DISJ: '||';
 SEMICOLON: ';';
 DOT: '.';
 QUOTE: '"';
+EQEQ: '==';
+EXCL_EQ: '!=';
+LANGLE: '<';
+RANGLE: '>';
+LE: '<=';
+GE: '>=';
+QUEST_NO_WS: '?';
+ADD: '+';
+SUB: '-';
+MULT: '*';
+DIV: '/';
+MOD: '%';
+INCR: '++';
+DECR: '--';
+EXCL_WS: '!' Hidden;
+EXCL_NO_WS: '!';
+ARROW: '->';
+LSQUARE: '['; // todo
+RSQUARE: ']';
+RANGE: '..';
 
 NL: '\n' | '\r' '\n'?;
+
+fragment Hidden: DelimitedComment | LineComment | WS;
+
 
 LineComment
     : '//' ~[\r\n]*
       -> channel(HIDDEN)
     ;
 
-WS	: 	(' '| '\t') -> skip
+DelimitedComment
+    : '/*' ( DelimitedComment | . )*? '*/'
+      -> channel(HIDDEN)
+    ;
+
+WS	: 	(' '| '\t' | '\u000C') -> skip
 	;
 
 // SECTION: lexicalIdentifiers

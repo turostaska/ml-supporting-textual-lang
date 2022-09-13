@@ -14,7 +14,7 @@ class Dataset
     var trg: Image2d,
     val transform: Compose? = null,
     val unaligned: Boolean = true,
-    srcMask: Image2d,
+    srcMask: Image2d, // todo: missing
 ) : Dataset() {
     val foo: Int = 0
     var bar = "asd"
