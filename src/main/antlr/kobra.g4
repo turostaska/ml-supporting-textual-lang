@@ -3,7 +3,7 @@ grammar kobra;
 // SECTION: general
 
 program
-    : NL* (declaration NL*)* EOF
+    : NL* statements NL* EOF
     ;
 
 declaration
@@ -48,11 +48,11 @@ returnStatement
     ;
 
 assignment
-    : identifier ASSIGNMENT ( expression | identifier ) NL*
+    : identifier ASSIGNMENT expression NL*
     ;
 
 statements
-    : (statement (SEMICOLON? statement)*)? SEMICOLON?
+    : (statement (semis statement)*)? semis?
     ;
 
 block
@@ -339,6 +339,10 @@ excl
 
 semi
     : (SEMICOLON | NL) NL*
+    ;
+
+semis
+    : (SEMICOLON | NL)+
     ;
 
 // SECTION: types

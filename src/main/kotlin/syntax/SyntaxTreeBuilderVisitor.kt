@@ -5,6 +5,7 @@ import com.kobra.kobraParser
 import symtab.Scope
 import symtab.extensions.className
 import symtab.extensions.isMember
+import syntax.node.AssignmentNode
 import syntax.node.ClassDeclarationNode
 import syntax.node.ClassPropertyDeclarationNode
 import syntax.node.PropertyDeclarationNode
@@ -36,10 +37,18 @@ class SyntaxTreeBuilderVisitor(
             ClassPropertyDeclarationNode(symbol, value, type, currentNode, false).let {
                 currentNode.addChild(it)
             }
-        else
-            PropertyDeclarationNode(symbol, value, type, currentNode).let { currentNode.addChild(it) }
+        else PropertyDeclarationNode(symbol, value, type, currentNode).let { currentNode.addChild(it) }
 
         super.visitPropertyDeclaration(ctx)
+    }
+
+    override fun visitAssignment(ctx: kobraParser.AssignmentContext): Unit = ctx.run {
+        val symbol = currentScope.resolveVariable(ctx.identifier().text)!!
+        val value = expression()
+
+        AssignmentNode(symbol, value, currentNode).let { currentNode.addChild(it) }
+
+        super.visitAssignment(this)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {

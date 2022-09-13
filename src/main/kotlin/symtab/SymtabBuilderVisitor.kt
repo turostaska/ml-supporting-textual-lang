@@ -69,6 +69,22 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitPropertyDeclaration(this)
     }
 
+    override fun visitAssignment(ctx: AssignmentContext): Unit = ctx.run {
+        val varName = this.identifier().text
+        val symbol = currentScope.resolveVariable(varName)
+            ?: throw RuntimeException("Attempting to reassign value of undeclared variable $varName")
+
+        if (symbol.isMutable) {
+            if (expression().inferredType.isNotSubtypeOf(symbol.type)) {
+                throw RuntimeException(
+                    "Can't assign a value of type ${expression().inferredType} to a variable of type ${symbol.type}"
+                )
+            }
+        } else throw RuntimeException("Attempting to reassign read-only variable $varName")
+
+        super.visitAssignment(this)
+    }
+
     private fun String.subtypeOf(other: String) =
         typeHierarchy.find(other).findInSubtree(this.asType()) != null
 
