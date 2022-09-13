@@ -1,10 +1,7 @@
 package syntax.expression
 
 import com.kobra.kobraParser.*
-import symtab.extensions.isBoolean
-import symtab.extensions.isInt
-import symtab.extensions.isNullLiteral
-import symtab.extensions.isString
+import symtab.extensions.*
 import util.second
 
 fun ExpressionContext.toPythonCode(): String = this.disjunction().toPythonCode()
@@ -132,6 +129,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isNullLiteral -> "None"
         isInt -> this.literalConstant().IntegerLiteral().text
         isString -> this.stringLiteral().text
+        isSimpleIdentifier -> this.simpleIdentifier().text
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
 }

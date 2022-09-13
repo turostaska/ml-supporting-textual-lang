@@ -19,14 +19,7 @@ val PrimaryExpressionContext.isInt get() = (this.literalConstant()?.IntegerLiter
 
 val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant()?.NullLiteral() != null)
 
-val PrimaryExpressionContext.inferredType
-    get() = when {
-        isBoolean -> BOOLEAN
-        isInt -> INT
-        isString -> STRING
-        isNullLiteral -> NOTHING_N
-        else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
-    }
+val PrimaryExpressionContext.isSimpleIdentifier get() = (this.simpleIdentifier() != null)
 
 class TypeInference(
     private val symtabBuilder: SymtabBuilderVisitor,
@@ -113,6 +106,20 @@ class TypeInference(
 
     private val PostfixUnaryExpressionContext.inferredType: String
         get() = this.primaryExpression().inferredType
+
+    private val PrimaryExpressionContext.inferredType
+        get() = when {
+            isBoolean -> BOOLEAN
+            isInt -> INT
+            isString -> STRING
+            isNullLiteral -> NOTHING_N
+            isSimpleIdentifier -> {
+                currentScope.resolveVariable(simpleIdentifier().text)?.type
+                    ?: throw RuntimeException("Simple identifier '${this.text}' has no type specified")
+            }
+
+            else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
+        }
 }
 
 private fun String.nonNullable() = this.removeSuffix("?")
