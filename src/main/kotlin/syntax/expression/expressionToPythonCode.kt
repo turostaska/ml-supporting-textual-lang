@@ -130,6 +130,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isInt -> this.literalConstant().IntegerLiteral().text
         isString -> this.stringLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
+        isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
 }

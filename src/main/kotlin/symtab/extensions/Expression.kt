@@ -21,6 +21,8 @@ val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant()?.Null
 
 val PrimaryExpressionContext.isSimpleIdentifier get() = (this.simpleIdentifier() != null)
 
+val PrimaryExpressionContext.isParenthesized get() = (this.parenthesizedExpression() != null)
+
 class TypeInference(
     private val symtabBuilder: SymtabBuilderVisitor,
 ) {
@@ -117,7 +119,7 @@ class TypeInference(
                 currentScope.resolveVariable(simpleIdentifier().text)?.type
                     ?: throw RuntimeException("Simple identifier '${this.text}' has no type specified")
             }
-
+            isParenthesized -> this.parenthesizedExpression().expression().inferredType
             else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
         }
 }
