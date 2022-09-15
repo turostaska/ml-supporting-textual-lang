@@ -62,6 +62,9 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val name = simpleIdentifier().text
         val type = type()?.text ?: expression().inferredType
 
+        if (currentScope.resolveVariable(name) != null)
+            throw RuntimeException("Redeclaration of variable $name")
+
         if (expression().inferredType.isNotSubtypeOf(type))
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
