@@ -131,6 +131,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isString -> this.stringLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
         isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
+        isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
 }

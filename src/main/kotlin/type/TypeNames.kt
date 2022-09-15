@@ -11,6 +11,7 @@ object TypeNames {
     const val NOTHING = "Nothing"
     const val INT = "Int"
     const val RANGE = "Range"
+    const val LIST = "List"
 
     const val ANY_N = "Any?"
     const val STRING_N = "String?"
@@ -19,6 +20,7 @@ object TypeNames {
     const val NOTHING_N = "Nothing?"
     const val INT_N = "Int?"
     const val RANGE_N = "Range?"
+    const val LIST_N = "List?"
 
     const val ANY_PY = "any"
     const val STRING_PY = "str"
@@ -26,4 +28,5 @@ object TypeNames {
     const val INT_PY = "int"
     const val RANGE_PY = "range"
     const val UNIT_PY = "None"
+    const val LIST_PY = "list"
 }

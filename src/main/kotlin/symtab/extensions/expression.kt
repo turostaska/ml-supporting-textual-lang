@@ -13,3 +13,5 @@ val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant()?.Null
 val PrimaryExpressionContext.isSimpleIdentifier get() = (this.simpleIdentifier() != null)
 
 val PrimaryExpressionContext.isParenthesized get() = (this.parenthesizedExpression() != null)
+
+val PrimaryExpressionContext.isCollection get() = (this.collectionLiteral() != null)

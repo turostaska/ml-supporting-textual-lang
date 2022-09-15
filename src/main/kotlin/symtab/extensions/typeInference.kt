@@ -102,6 +102,7 @@ class TypeInference(
                     ?: throw RuntimeException("Simple identifier '${this.text}' has no type specified")
             }
             isParenthesized -> this.parenthesizedExpression().expression().inferredType
+            isCollection -> TypeNames.LIST
             else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
         }
 }

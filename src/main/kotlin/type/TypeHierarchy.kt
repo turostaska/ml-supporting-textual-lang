@@ -6,6 +6,8 @@ import type.TypeNames.BOOLEAN
 import type.TypeNames.BOOLEAN_PY
 import type.TypeNames.INT
 import type.TypeNames.INT_PY
+import type.TypeNames.LIST
+import type.TypeNames.LIST_PY
 import type.TypeNames.NOTHING
 import type.TypeNames.NUMBER
 import type.TypeNames.STRING
@@ -26,6 +28,7 @@ class TypeHierarchy {
         addType(NUMBER)
         addType(BOOLEAN, pythonName = BOOLEAN_PY)
         addType(INT, baseClassNames = setOf(NUMBER), pythonName = INT_PY)
+        addType(LIST, pythonName = LIST_PY)
     }
 
     fun addType(
