@@ -13,11 +13,17 @@ class Type(
     fun addParent(parent: Type) {
         this._parents += parent
         parent._children += this
+        // todo: remove any/anyN?
+    }
+
+    fun addParents(vararg parents: Type) {
+        parents.forEach(this::addParent)
     }
 
     fun addChild(child: Type) {
         this._children += child
         child._parents += this
+        // todo: remove nothing/nothingN?
     }
 
     fun removeParent(parent: Type) {
@@ -52,3 +58,11 @@ class Type(
 
     override fun toString() = fullName
 }
+
+val Type.nullableVariant: Type
+    get() {
+        require(!nullable) { "Can't get nullable variant of nullable type" }
+
+        return this.parents.find { it.name == name && it.nullable }
+            ?: throw RuntimeException("Can't find nullable type variant of '$name' in its parents")
+    }

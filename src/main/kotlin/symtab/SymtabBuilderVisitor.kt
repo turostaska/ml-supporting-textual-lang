@@ -3,6 +3,7 @@ package symtab
 import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser.*
 import symtab.extensions.*
+import type.BuiltInTypes
 import type.TypeHierarchy
 import type.util.asType
 import type.util.contains
@@ -11,10 +12,17 @@ import type.util.findInSubtree
 
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
 class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
-    lateinit var currentScope: Scope
     val globalScope = Scope(parent = null)
-    val typeHierarchy = TypeHierarchy()
+    var currentScope: Scope = globalScope
+    val typeHierarchy = TypeHierarchy(this)
+
     private val typeInference = TypeInference(this)
+
+    init {
+        globalScope.addAllBuiltInTypes(
+            *BuiltInTypes.all.filter { !it.nullable }.map { BuiltInTypeSymbol(it.name, it) }.toTypedArray()
+        )
+    }
 
     override fun visitProgram(ctx: ProgramContext) {
         currentScope = globalScope
@@ -25,7 +33,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (className in typeHierarchy)
             throw RuntimeException("Redefinition of class '$className'")
 
-        typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
+        val declaredType = typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
+        currentScope.addType(TypeSymbol(className, declaredType))
 
         currentScope = Scope(parent = currentScope, name = "Class declaration of $className")
         super.visitClassDeclaration(ctx).also {

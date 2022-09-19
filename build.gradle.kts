@@ -46,6 +46,7 @@ tasks.getByName("compileKotlin").dependsOn("generateGrammarSource")
 dependencies {
     testImplementation(kotlin("test"))
     antlr("org.antlr:antlr4:4.10.1")
+    implementation(kotlin("reflect"))
 }
 
 tasks.test {

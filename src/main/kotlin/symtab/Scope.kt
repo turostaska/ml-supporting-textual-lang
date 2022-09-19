@@ -1,6 +1,7 @@
 package symtab
 
 import symtab.Scope.Serial.serial
+import type.nullableVariant
 
 class Scope(
     val parent: Scope? = null,
@@ -20,6 +21,10 @@ class Scope(
         symbols.find { it.name == name && it is VariableSymbol } as? VariableSymbol
             ?: this.parent?.resolveVariable(name)
 
+    fun resolveType(name: String): TypeSymbol? =
+        symbols.find { it.name == name && it is TypeSymbol } as? TypeSymbol
+            ?: this.parent?.resolveType(name)
+
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
@@ -33,7 +38,35 @@ class Scope(
                     throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
                 symbol
             }
+
+            is TypeSymbol -> {
+                if (symbols.find { it.name == symbol.name && it is TypeSymbol && it.type == symbol.type } != null)
+                    throw RuntimeException("Redefinition of type ${symbol.name} in scope ${this.name}")
+                symbol
+            }
         }
+    }
+
+    /**
+     * Adds the non-nullable and nullable version of the type symbol to the scope
+     * @param symbol Symbol of non-nullable type
+     */
+    fun addType(symbol: TypeSymbol) {
+        require(symbol.name.none { it == '?' }) { "Scope.addType should only be used with non-nullable types" }
+
+        addAll(
+            symbol,
+            TypeSymbol("${symbol.name}?", symbol.referencedType.nullableVariant)
+        )
+    }
+
+    fun addBuiltInType(symbol: BuiltInTypeSymbol) {
+        require(symbol.name.none { it == '?' }) { "Scope.addBuiltInType should only be used with non-nullable types" }
+
+        addAll(
+            symbol,
+            BuiltInTypeSymbol("${symbol.name}?", symbol.referencedType.nullableVariant)
+        )
     }
 
     operator fun plusAssign(symbol: Symbol) = this.add(symbol)
@@ -53,6 +86,14 @@ class Scope(
         sb.appendLine()
 
         sb.toString()
+    }
+
+    fun addAll(vararg symbols: Symbol) {
+        symbols.forEach(this::add)
+    }
+
+    fun addAllBuiltInTypes(vararg symbols: BuiltInTypeSymbol) {
+        symbols.forEach(this::addBuiltInType)
     }
 
     object Serial { var serial = 0 }
