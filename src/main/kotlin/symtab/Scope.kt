@@ -23,13 +23,13 @@ class Scope(
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
-                if (symbols.find { it.name == name && it is MethodSymbol } != null)
+                if (symbols.find { it.name == symbol.name && it is MethodSymbol } != null)
                     throw RuntimeException("Redefinition of function ${symbol.name} in scope ${this.name}")
                 symbol
             }
 
             is VariableSymbol -> {
-                if (symbols.find { it.name == name && it is VariableSymbol } != null)
+                if (symbols.find { it.name == symbol.name && it is VariableSymbol } != null)
                     throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
                 symbol
             }
