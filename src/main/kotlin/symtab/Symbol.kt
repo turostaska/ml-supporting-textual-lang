@@ -23,7 +23,8 @@ class VariableSymbol(
     override fun toString() = "${mutability.name} $name: $type"
 }
 
-class MethodSymbol(
+// todo: infix and property methods?
+open class MethodSymbol(
     override val name: String,
     val returnType: String?,
     val params: List<String>,
@@ -39,10 +40,28 @@ class MethodSymbol(
     override fun toString() = "fun $name: $type"
 }
 
+class ClassMethodSymbol(
+    name: String,
+    returnType: String?,
+    params: List<String>,
+    val onType: TypeSymbol,
+) : MethodSymbol(name, returnType, params) {
+    init {
+        onType.classMethods += this
+    }
+
+    override val type: String
+        get() = "$onType.(${params.joinToString()}) -> ${returnType ?: TypeNames.UNIT}"
+
+    override fun toString() = "fun $onType.$name: $type"
+}
+
 open class TypeSymbol(
     override val name: String,
     val referencedType: Type,
 ) : Symbol {
+    val classMethods: MutableSet<MethodSymbol> = mutableSetOf()
+
     override val type: String = "{ Type: ${referencedType.name} }"
 
     override fun toString() = "class $name (user-defined)"
