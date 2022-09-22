@@ -25,6 +25,16 @@ object BuiltInTypes {
     }
     val intN = int.nullableVariant
 
+    val float = Type(TypeNames.FLOAT, false, pythonName = TypeNames.FLOAT_PY).also {
+        addBuiltInType(it)
+    }
+    val floatN = float.nullableVariant
+
+    val range = Type(TypeNames.RANGE, false, pythonName = TypeNames.RANGE_PY).also {
+        addBuiltInType(it)
+    }
+    val rangeN = range.nullableVariant
+
     val boolean = Type(TypeNames.BOOLEAN, false, pythonName = TypeNames.BOOLEAN_PY).also {
         addBuiltInType(it)
     }
