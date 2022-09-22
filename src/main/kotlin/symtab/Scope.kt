@@ -28,8 +28,9 @@ class Scope(
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
-                if (symbols.find { it.name == symbol.name && it is MethodSymbol } != null)
-                    throw RuntimeException("Redefinition of function ${symbol.name} in scope ${this.name}")
+                val matchingSymbol = symbols.find { it.name == symbol.name && it is MethodSymbol }
+                if (matchingSymbol != null && matchingSymbol == symbol)
+                    throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
                 symbol
             }
 
