@@ -6,22 +6,26 @@ import symtab.ClassMethodSymbol
 import symtab.MethodSymbol
 import symtab.Scope
 import symtab.TypeSymbol
-import type.TypeNames.typeNamesToPythonMap
-import util.filterNonNull
+import type.TypeNames.pythonTypeNamesToKobraMap
 
 // todo: fáj a szemem, ezt nagyon ki kell takarítani
 class PythonLibVisitor(
     private val globalScope: Scope,
 ) : Python3ParserBaseVisitor<Unit>() {
-    private val classesToVisit = listOf("int", "float", "str", "bool", "list", "range")
+    private val classesToVisitPy = listOf("int", "float", "str", "bool", "list", "range")
     private var currentlyVisitedClass: String? = null
     private var currentTypeSymbol: TypeSymbol? = null
 
+    private val classesToVisit
+        get() = classesToVisitPy.map {
+            pythonTypeNamesToKobraMap[it] ?: throw RuntimeException("Python type $it is not mapped to Kobra type")
+        }
+
     override fun visitClassdef(ctx: Python3Parser.ClassdefContext) {
         val classNamePy = ctx.NAME().text
-        if (classNamePy !in classesToVisit) return
+        if (classNamePy !in classesToVisitPy) return
 
-        val className = typeNamesToPythonMap[classNamePy]
+        val className = pythonTypeNamesToKobraMap[classNamePy]
             ?: throw RuntimeException("Can't resolve Python type '$classNamePy' to Kobra type")
         currentTypeSymbol = globalScope.resolveType(className)
             ?: throw RuntimeException("Can't find type symbol for type '$className' in global scope")
@@ -37,25 +41,19 @@ class PythonLibVisitor(
         val functionName = ctx.NAME().text
         val params =
             try {
-                ctx.parameters()?.typedargslist()?.tfpdef()?.filter { it.NAME()?.text != "self" }
-                    ?.mapNotNull { it.NAME()?.text to it.test()?.text }
-                    ?.toMap()?.mapValues {
-                        it.value?.let { typeNamePy ->
-                            val typeName = typeNamesToPythonMap[typeNamePy]!!
-                            globalScope.resolveType(typeName)
-                                ?: throw RuntimeException("Can't find symbol for type '$typeName' in global scope")
-                        }
-                    }?.filterNonNull() ?: emptyMap()
+                ctx.parameterNamesToTypeNameMap.mapValues {
+                    val typeName = it.value
+                    globalScope.resolveType(typeName)
+                        ?: throw RuntimeException("Can't find symbol for type '$typeName' in global scope")
+                }
             } catch (e: Exception) {
+                println("Caught exception: ${e.message}, continuing...")
                 return
             }
 
-        val returnType = ctx.test().or_test(0).and_test(0).not_test(0).comparison().expr(0)
-            .xor_expr(0).and_expr(0).shift_expr(0).arith_expr(0).term(0).factor(0).power().atom_expr()
-            .atom().NAME()?.text?.let {
-                if (it !in classesToVisit) return
-                typeNamesToPythonMap[it]
-            }
+        val returnType = ctx.returnTypeName?.also {
+            if (it !in classesToVisit) return
+        }
 
         println("Function definition of ${currentlyVisitedClass?.plus(".$functionName") ?: functionName}")
 

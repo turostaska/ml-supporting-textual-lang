@@ -31,7 +31,7 @@ object TypeNames {
     const val LIST_PY = "list"
     const val FLOAT_PY = "float"
 
-    val typeNamesToPythonMap = mapOf(
+    val pythonTypeNamesToKobraMap = mapOf(
         ANY_PY to ANY,
         STRING_PY to STRING,
         BOOLEAN_PY to BOOLEAN,
@@ -39,5 +39,6 @@ object TypeNames {
         RANGE_PY to RANGE,
         LIST_PY to LIST,
         FLOAT_PY to FLOAT,
+        UNIT_PY to UNIT,
     )
 }
