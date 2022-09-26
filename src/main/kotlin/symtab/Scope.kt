@@ -14,16 +14,20 @@ class Scope(
     }
 
     fun resolveMethod(name: String): MethodSymbol? =
-        symbols.find { it.name == name && it is MethodSymbol } as? MethodSymbol
-            ?: this.parent?.resolveMethod(name)
+        resolveMethodLocally(name) ?: this.parent?.resolveMethod(name)
 
     fun resolveVariable(name: String): VariableSymbol? =
-        symbols.find { it.name == name && it is VariableSymbol } as? VariableSymbol
-            ?: this.parent?.resolveVariable(name)
+        resolveVariableLocally(name) ?: this.parent?.resolveVariable(name)
 
     fun resolveType(name: String): TypeSymbol? =
         symbols.find { it.name == name && it is TypeSymbol } as? TypeSymbol
             ?: this.parent?.resolveType(name)
+
+    fun resolveMethodLocally(name: String): MethodSymbol? =
+        symbols.find { it.name == name && it is MethodSymbol } as? MethodSymbol
+
+    fun resolveVariableLocally(name: String): VariableSymbol? =
+        symbols.find { it.name == name && it is VariableSymbol } as? VariableSymbol
 
     fun add(symbol: Symbol) {
         symbols += when (symbol) {

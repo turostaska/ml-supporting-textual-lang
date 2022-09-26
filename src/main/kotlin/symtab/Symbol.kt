@@ -31,7 +31,9 @@ open class MethodSymbol(
     val isInfix: Boolean = false,
 ) : Symbol {
     override val type: String
-        get() = "(${params.map { "${it.key}: ${it.value.name}" }.joinToString()}) -> ${returnType ?: TypeNames.UNIT}"
+        get() = "(${params.map { "${it.key}: ${it.value.name}" }.joinToString()}) -> $returnTypeName"
+
+    val returnTypeName = returnType ?: TypeNames.UNIT
 
     companion object {
         fun fun0(name: String, returnType: String? = null) = MethodSymbol(name, returnType, emptyMap())

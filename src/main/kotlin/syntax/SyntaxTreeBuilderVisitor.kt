@@ -5,10 +5,7 @@ import com.kobra.kobraParser
 import symtab.Scope
 import symtab.extensions.className
 import symtab.extensions.isMember
-import syntax.node.AssignmentNode
-import syntax.node.ClassDeclarationNode
-import syntax.node.ClassPropertyDeclarationNode
-import syntax.node.PropertyDeclarationNode
+import syntax.node.*
 import type.TypeHierarchy
 import type.util.find
 
@@ -82,6 +79,15 @@ class SyntaxTreeBuilderVisitor(
             // todo: constructor parameter
         }
         super.visitClassParameter(this)
+    }
+
+    override fun visitFunctionDeclaration(ctx: kobraParser.FunctionDeclarationContext): Unit = ctx.run {
+        // todo: class methods
+        currentNode.addChild(
+            FunctionDeclarationNode(this, currentNode)
+        )
+
+        super.visitFunctionDeclaration(ctx)
     }
 }
 

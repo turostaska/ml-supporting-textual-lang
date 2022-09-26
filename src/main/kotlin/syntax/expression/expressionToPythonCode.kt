@@ -119,7 +119,10 @@ private fun PrefixUnaryExpressionContext.toPythonCode(): String {
 
 private fun PostfixUnaryExpressionContext.toPythonCode(): String {
     return if (this.postfixUnarySuffix().any()) {
-        TODO("lehet ez egyáltalán expression?")
+        if (postfixUnarySuffix().first().callSuffix() != null) {
+            val params = postfixUnarySuffix().first().callSuffix().valueArguments().valueArgument()
+            "${primaryExpression().simpleIdentifier().text}(${params.joinToString { it.text }})"
+        } else TODO("lehet ez egyáltalán expression?")
     } else this.primaryExpression().toPythonCode()
 }
 
@@ -132,6 +135,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isSimpleIdentifier -> this.simpleIdentifier().text
         isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
+        isReturnStatement -> "return ${this.jumpExpression().expression().toPythonCode()}"
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
 }

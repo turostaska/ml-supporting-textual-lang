@@ -5,6 +5,7 @@ import com.kobra.kobraParser.*
 import symtab.extensions.*
 import type.BuiltInTypes
 import type.TypeHierarchy
+import type.TypeNames
 import type.util.asType
 import type.util.contains
 import type.util.find
@@ -71,8 +72,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val name = simpleIdentifier().text
         val type = type()?.text ?: expression().inferredType
 
-        if (currentScope.resolveVariable(name) != null)
-            throw RuntimeException("Redeclaration of variable $name")
+        if (currentScope.resolveVariableLocally(name) != null)
+            throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
 
         if (expression().inferredType.isNotSubtypeOf(type))
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
@@ -97,10 +98,35 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitAssignment(this)
     }
 
+    override fun visitFunctionDeclaration(ctx: FunctionDeclarationContext): Unit = ctx.run {
+        require(currentScope.resolveMethodLocally(functionName) == null) {
+            "Redeclaration of method '$functionName' in scope '${currentScope.name}'"
+        }
+
+        require(statements.lastOrNull()?.isReturnStatement == true || returnTypeName == TypeNames.UNIT) {
+            "Last statement must be return OR return type must be Unit"
+        }
+
+        val returnStatements = statements.filter { it.isReturnStatement }
+        require(returnStatements.all { it.jumpExpression?.expression()?.inferredType == returnTypeName }) {
+            "All return statements should return type '$returnTypeName'"
+        }
+
+        val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value) }
+        currentScope += MethodSymbol(functionName, returnTypeName, params)
+
+        currentScope = Scope(parent = currentScope, name = "Function declaration of $functionName")
+        super.visitFunctionDeclaration(ctx)
+        currentScope = currentScope.parent!!
+    }
+
     private fun String.subtypeOf(other: String) =
         typeHierarchy.find(other).findInSubtree(this.asType()) != null
 
     private fun String.isNotSubtypeOf(other: String) = !this.subtypeOf(other)
 
     private val ExpressionContext.inferredType get() = typeInference.inferType(this)
+
+    private val FunctionDeclarationContext.returnTypeNameOfLastStatement
+        get() = statements.lastOrNull()?.expression()?.let { typeInference.inferType(it) } ?: TypeNames.UNIT
 }

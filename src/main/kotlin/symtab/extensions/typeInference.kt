@@ -89,7 +89,15 @@ class TypeInference(
         get() = this.postfixUnaryExpression().inferredType
 
     private val kobraParser.PostfixUnaryExpressionContext.inferredType: String
-        get() = this.primaryExpression().inferredType
+        get() {
+            val callSuffix = postfixUnarySuffix()?.firstOrNull()?.callSuffix()
+            if (callSuffix != null) {
+                return this.primaryExpression().simpleIdentifier().Identifier().text.let {
+                    currentScope.resolveMethodOrThrow(it).returnTypeName
+                }
+            }
+            return this.primaryExpression().inferredType
+        }
 
     private val kobraParser.PrimaryExpressionContext.inferredType
         get() = when {
@@ -103,6 +111,7 @@ class TypeInference(
             }
             isParenthesized -> this.parenthesizedExpression().expression().inferredType
             isCollection -> TypeNames.LIST
+            isReturnStatement -> TypeNames.NOTHING
             else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
         }
 }

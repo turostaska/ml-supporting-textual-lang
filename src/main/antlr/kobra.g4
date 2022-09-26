@@ -40,11 +40,7 @@ functionParameter
 // SECTION: statements
 
 statement // todo
-    : declaration | assignment | expression | returnStatement
-    ;
-
-returnStatement
-    : RETURN (expression | identifier)
+    : declaration | assignment | expression
     ;
 
 assignment

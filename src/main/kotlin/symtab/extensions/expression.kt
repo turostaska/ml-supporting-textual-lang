@@ -15,3 +15,5 @@ val PrimaryExpressionContext.isSimpleIdentifier get() = (this.simpleIdentifier()
 val PrimaryExpressionContext.isParenthesized get() = (this.parenthesizedExpression() != null)
 
 val PrimaryExpressionContext.isCollection get() = (this.collectionLiteral() != null)
+
+val PrimaryExpressionContext.isReturnStatement get() = (this.jumpExpression()?.RETURN() != null)
