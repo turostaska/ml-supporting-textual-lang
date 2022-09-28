@@ -2,9 +2,7 @@ package syntax.node
 
 import com.kobra.kobraParser.FunctionDeclarationContext
 import com.kobra.kobraParser.StatementContext
-import symtab.extensions.functionName
-import symtab.extensions.params
-import symtab.extensions.returnTypeName
+import symtab.MethodSymbol
 import symtab.extensions.statements
 import syntax.SyntaxTreeNode
 import syntax.expression.toPythonCode
@@ -14,22 +12,26 @@ import util.joinToCodeWithTabToAllLinesButFirst
 
 class FunctionDeclarationNode(
     functionCtx: FunctionDeclarationContext,
-    parent: SyntaxTreeNode
+    parent: SyntaxTreeNode,
+    methodSymbol: MethodSymbol,
 ): SyntaxTreeNode(parent) {
-    private val functionName = functionCtx.functionName
-    private val statements = functionCtx.statements
-    private val returnTypeName = functionCtx.returnTypeName
+    private val functionName = methodSymbol.name
+    private val statements = functionCtx.statements // FIXME
+    private val returnTypeName = methodSymbol.returnTypeName
+    // todo: MethodSymbol's return type should be a TypeSymbol
     private val returnTypeNamePy = TypeNames.pythonTypeNamesToKobraMap.getKey(returnTypeName)
-    private val params = functionCtx.params
+    private val params = methodSymbol.params
 
     override fun toCode(): String {
-        // todo: params
         // todo: statements as nodes
         return """
-            |def $functionName() -> $returnTypeNamePy:
+            |def $functionName($paramsToCode) -> $returnTypeNamePy:
             |    ${statements.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() } }
         """.trimMargin()
     }
+
+    private val paramsToCode
+        get() = params.map { (k, v) -> "$k: ${v.referencedType.pythonName}" }.joinToString()
 
     private val statementsToCode
         get() = if (statements.any()) statements.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() } else "pass"

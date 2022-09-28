@@ -115,7 +115,10 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value) }
         currentScope += MethodSymbol(functionName, returnTypeName, params)
 
-        currentScope = Scope(parent = currentScope, name = "Function declaration of $functionName")
+        currentScope = Scope(parent = currentScope, name = "Function declaration of $functionName").apply {
+            params.forEach { (k, v) -> VariableSymbol(k, v.name, Mutability.VAL).let(::add) }
+        }
+        // todo: current scope should also know which methodSymbol it refers to to check validity of return statements
         super.visitFunctionDeclaration(ctx)
         currentScope = currentScope.parent!!
     }

@@ -4,6 +4,7 @@ import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser
 import symtab.Scope
 import symtab.extensions.className
+import symtab.extensions.functionName
 import symtab.extensions.isMember
 import syntax.node.*
 import type.TypeHierarchy
@@ -83,8 +84,10 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitFunctionDeclaration(ctx: kobraParser.FunctionDeclarationContext): Unit = ctx.run {
         // todo: class methods
+        val methodSymbol = currentScope.resolveMethod(functionName)!!
+
         currentNode.addChild(
-            FunctionDeclarationNode(this, currentNode)
+            FunctionDeclarationNode(this, currentNode, methodSymbol)
         )
 
         super.visitFunctionDeclaration(ctx)

@@ -13,6 +13,7 @@ sealed interface Symbol {
 }
 
 // todo: visibility
+// todo: type should be TypeSymbol
 class VariableSymbol(
     override val name: String,
     override val type: String,
