@@ -92,6 +92,7 @@ class TypeInference(
         get() {
             val callSuffix = postfixUnarySuffix()?.firstOrNull()?.callSuffix()
             if (callSuffix != null) {
+                // todo: nem veszi figyelembe a paramétereket
                 return this.primaryExpression().simpleIdentifier().Identifier().text.let {
                     currentScope.resolveMethodOrThrow(it).returnTypeName
                 }

@@ -2,6 +2,7 @@ package symtab
 
 import type.Type
 import type.TypeNames
+import util.getKey
 
 val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
 
@@ -16,8 +17,9 @@ sealed interface Symbol {
 // todo: type should be TypeSymbol
 class VariableSymbol(
     override val name: String,
-    override val type: String,
+    val typeSymbol: TypeSymbol,
     val mutability: Mutability,
+    override val type: String = typeSymbol.name,
 ) : Symbol {
 
     val isMutable = (mutability == Mutability.VAR)
@@ -125,6 +127,9 @@ open class TypeSymbol(
         return result
     }
 }
+
+// todo: reverse map as property
+fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) TypeNames.pythonTypeNamesToKobraMap.getKey(name) else name
 
 class BuiltInTypeSymbol(
     name: String,

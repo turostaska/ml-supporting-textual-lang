@@ -52,7 +52,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     override fun visitClassParameter(ctx: ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val type = this.type().text
+        val type = this.type().text.trim()
+        val typeSymbol = currentScope.resolveTypeOrThrow(type)
 
         if (expression()?.inferredType?.isNotSubtypeOf(type) == true)
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
@@ -60,17 +61,18 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (isNotMember) {
             // We are in constructor scope, so we add the symbol to the symtab
             // todo: assert type of scope
-            currentScope += VariableSymbol(name, type, Mutability.VAL)
+            currentScope += VariableSymbol(name, typeSymbol, Mutability.VAL)
         } else {
             // A class member, we add it to the class scope
-            currentScope.parent!! += VariableSymbol(name, type, this.mutability.getAsMutability())
+            currentScope.parent!! += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
         }
         super.visitClassParameter(this)
     }
 
     override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val type = type()?.text ?: expression().inferredType
+        val type = type()?.text?.trim() ?: expression().inferredType
+        val typeSymbol = currentScope.resolveTypeOrThrow(type)
 
         if (currentScope.resolveVariableLocally(name) != null)
             throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
@@ -78,7 +80,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (expression().inferredType.isNotSubtypeOf(type))
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
-        currentScope += VariableSymbol(name, type, this.mutability.getAsMutability())
+        currentScope += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
         super.visitPropertyDeclaration(this)
     }
 
@@ -107,20 +109,22 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             "Last statement must be return OR return type must be Unit"
         }
 
-        val returnStatements = statements.filter { it.isReturnStatement }
-        require(returnStatements.all { it.jumpExpression?.expression()?.inferredType == returnTypeName }) {
-            "All return statements should return type '$returnTypeName'"
-        }
-
         val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value) }
-        currentScope += MethodSymbol(functionName, returnTypeName, params)
+        val methodSymbol = MethodSymbol(functionName, returnTypeName, params)
+        currentScope += methodSymbol
 
-        currentScope = Scope(parent = currentScope, name = "Function declaration of $functionName").apply {
-            params.forEach { (k, v) -> VariableSymbol(k, v.name, Mutability.VAL).let(::add) }
+        currentScope = FunctionScope(currentScope, methodSymbol).apply {
+            params.forEach { (k, v) -> VariableSymbol(k, v, Mutability.VAL).let(::add) }
         }
-        // todo: current scope should also know which methodSymbol it refers to to check validity of return statements
         super.visitFunctionDeclaration(ctx)
         currentScope = currentScope.parent!!
+    }
+
+    override fun visitJumpExpression(ctx: JumpExpressionContext): Unit = ctx.run {
+        check(currentScope is FunctionScope)
+        check((currentScope as FunctionScope).methodSymbol.returnType == this.expression().inferredType)
+
+        super.visitJumpExpression(this)
     }
 
     private fun String.subtypeOf(other: String) =

@@ -2,13 +2,15 @@ package syntax
 
 import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser
+import symtab.ClassScope
+import symtab.FunctionScope
 import symtab.Scope
 import symtab.extensions.className
 import symtab.extensions.functionName
 import symtab.extensions.isMember
+import syntax.expression.toPythonCode
 import syntax.node.*
 import type.TypeHierarchy
-import type.util.find
 
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
@@ -28,30 +30,27 @@ class SyntaxTreeBuilderVisitor(
     override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {
         val name = ctx.simpleIdentifier().text
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
-        val value = ctx.expression()
-        val type = typeHierarchy.find(symbol.type)
+        val value = ctx.expression().toPythonCode()
 
-        if (currentScope.name.contains("Class declaration"))
-            ClassPropertyDeclarationNode(symbol, value, type, currentNode, false).let {
-                currentNode.addChild(it)
-            }
-        else PropertyDeclarationNode(symbol, value, type, currentNode).let { currentNode.addChild(it) }
+        when (currentScope) {
+            is ClassScope -> ClassPropertyDeclarationNode(symbol, value, currentNode, false)
+            else -> PropertyDeclarationNode(symbol, value, currentNode)
+        }
 
         super.visitPropertyDeclaration(ctx)
     }
 
     override fun visitAssignment(ctx: kobraParser.AssignmentContext): Unit = ctx.run {
         val symbol = currentScope.resolveVariable(ctx.identifier().text)!!
-        val value = expression()
+        val value = expression().toPythonCode()
 
-        AssignmentNode(symbol, value, currentNode).let { currentNode.addChild(it) }
+        AssignmentNode(symbol, value, currentNode)
 
         super.visitAssignment(this)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {
         ClassDeclarationNode(ctx, currentNode).let {
-            currentNode.addChild(it)
             currentNode = it
         }
         currentScope = currentScope.children.first { it.name == "Class declaration of ${ctx.className}" }
@@ -70,12 +69,11 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val value = this.expression()
+        val value = this.expression().toPythonCode()
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
-        val type = typeHierarchy.find(symbol.type)
 
         if (isMember) {
-            currentNode.addChild(ClassPropertyDeclarationNode(symbol, value, type, currentNode))
+            ClassPropertyDeclarationNode(symbol, value, currentNode)
         } else {
             // todo: constructor parameter
         }
@@ -86,11 +84,24 @@ class SyntaxTreeBuilderVisitor(
         // todo: class methods
         val methodSymbol = currentScope.resolveMethod(functionName)!!
 
-        currentNode.addChild(
-            FunctionDeclarationNode(this, currentNode, methodSymbol)
-        )
+        FunctionDeclarationNode(currentNode, methodSymbol).let {
+            currentNode = it
+        }
+        currentScope = currentScope.children.first {
+            it is FunctionScope && it.name == "Function scope of ${methodSymbol.name}"
+        }
 
         super.visitFunctionDeclaration(ctx)
+
+        currentNode = currentNode.parent!!
+        currentScope = currentScope.parent!!
+    }
+
+    override fun visitJumpExpression(ctx: kobraParser.JumpExpressionContext): Unit = ctx.run {
+        // todo: ehhez nem kell a symtab?
+        ReturnStatementNode(currentNode, this.expression().toPythonCode())
+
+        super.visitJumpExpression(ctx)
     }
 }
 

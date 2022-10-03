@@ -3,7 +3,7 @@ package symtab
 import symtab.Scope.Serial.serial
 import type.nullableVariant
 
-class Scope(
+open class Scope(
     val parent: Scope? = null,
     val children: MutableList<Scope> = mutableListOf(),
     val name: String = if (parent == null) "Global scope" else "Scope ${serial++}",
@@ -103,3 +103,15 @@ class Scope(
 
     object Serial { var serial = 0 }
 }
+
+class FunctionScope(
+    parent: Scope? = null,
+    val methodSymbol: MethodSymbol,
+    name: String = "Function scope of ${methodSymbol.name}",
+): Scope(parent, name = name)
+
+class ClassScope(
+    parent: Scope? = null,
+    val typeSymbol: TypeSymbol,
+    name: String = "Class scope of ${typeSymbol.name}",
+): Scope(parent, name = name)

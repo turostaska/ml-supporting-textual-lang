@@ -1,7 +1,6 @@
 package symtab.extensions
 
 import com.kobra.kobraParser.StatementContext
-import syntax.expression.toPythonCode
 
 val StatementContext.primaryExpression
     get() = this.expression()?.disjunction()?.conjunction()?.firstOrNull()?.equality()?.firstOrNull()
@@ -21,12 +20,3 @@ val StatementContext.isAssignment
 
 val StatementContext.isPropertyDeclaration
     get() = this.declaration()?.propertyDeclaration() != null
-
-fun StatementContext.toCode(): String {
-    return when {
-        isReturnStatement -> "return ${jumpExpression!!.expression().toPythonCode()}"
-        isAssignment || isPropertyDeclaration ->
-            "${assignment()!!.identifier()} = ${assignment().expression().toPythonCode()}"
-        else -> throw RuntimeException("Unknown statement: '${this.text}'")
-    }
-}

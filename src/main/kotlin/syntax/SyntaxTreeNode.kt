@@ -7,6 +7,10 @@ abstract class SyntaxTreeNode(
 ) {
     protected val _children: MutableList<SyntaxTreeNode> = mutableListOf()
 
+    init {
+        _parent?._children?.add(this)
+    }
+
     val parent get() = _parent
     val children get() = _children.toList()
 
