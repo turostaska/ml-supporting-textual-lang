@@ -113,12 +113,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             "Last statement must be return OR return type must be Unit"
         }
 
-        val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value) }
+        val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value).let(::listOf) }
         val methodSymbol = MethodSymbol(functionName, returnTypeName, params)
         currentScope += methodSymbol
 
         currentScope = FunctionScope(currentScope, methodSymbol).apply {
-            params.forEach { (k, v) -> VariableSymbol(k, v, Mutability.VAL).let(::add) }
+            params.forEach { (k, v) -> VariableSymbol(k, v.first(), Mutability.VAL).let(::add) }
         }
         super.visitFunctionDeclaration(ctx)
         currentScope = currentScope.parent!!

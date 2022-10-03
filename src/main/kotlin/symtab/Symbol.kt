@@ -30,11 +30,11 @@ class VariableSymbol(
 open class MethodSymbol(
     override val name: String,
     val returnType: String?, // todo: TypeSymbol
-    val params: Map<String, TypeSymbol>,
+    val params: Map<String, List<TypeSymbol>>,
     val isInfix: Boolean = false,
 ) : Symbol {
     override val type: String
-        get() = "(${params.map { "${it.key}: ${it.value.name}" }.joinToString()}) -> $returnTypeName"
+        get() = "(${params.map { "${it.key}: ${it.value.joinToString { type -> type.name }}" }.joinToString()}) -> $returnTypeName"
 
     val returnTypeName = returnType ?: TypeNames.UNIT
 
@@ -68,7 +68,7 @@ open class MethodSymbol(
 class ClassMethodSymbol(
     name: String,
     returnType: String?,
-    params: Map<String, TypeSymbol>,
+    params: Map<String, List<TypeSymbol>>,
     val onType: TypeSymbol,
 ) : MethodSymbol(name, returnType, params) {
     init {
@@ -77,7 +77,7 @@ class ClassMethodSymbol(
 
     override val type: String
         get() = "$onType.(${
-            params.map { "${it.key}: ${it.value.name}" }.joinToString()
+            params.map { "${it.key}: ${it.value.first().name}" }.joinToString()
         }) -> ${returnType ?: TypeNames.UNIT}"
 
     override fun toString() = "fun $onType.$name: $type"

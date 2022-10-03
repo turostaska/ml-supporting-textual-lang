@@ -28,7 +28,7 @@ class FunctionDeclarationNode(
     }
 
     private val paramsToCode
-        get() = params.map { (k, v) -> "$k: ${v.referencedType.pythonName}" }.joinToString()
+        get() = params.map { (k, v) -> "$k: ${v.first().referencedType.pythonName}" }.joinToString()
 
     private val statementsToCode
         get() = if (children.any()) children.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() } else "pass"

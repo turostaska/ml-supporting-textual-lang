@@ -42,9 +42,11 @@ class PythonLibVisitor(
         val params =
             try {
                 ctx.parameterNamesToTypeNameMap.mapValues {
-                    val typeName = it.value
-                    globalScope.resolveType(typeName)
-                        ?: throw RuntimeException("Can't find symbol for type '$typeName' in global scope")
+                    val typeNames = it.value
+                    it.value.map { typeName ->
+                        globalScope.resolveType(typeName)
+                            ?: throw RuntimeException("Can't find symbol for type '$typeNames' in global scope")
+                    }
                 }
             } catch (e: Exception) {
                 println("Caught exception: ${e.message}, continuing...")
