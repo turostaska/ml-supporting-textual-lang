@@ -110,8 +110,14 @@ class FunctionScope(
     name: String = "Function scope of ${methodSymbol.name}",
 ): Scope(parent, name = name)
 
-class ClassScope(
+class ClassDeclarationScope(
     parent: Scope? = null,
     val typeSymbol: TypeSymbol,
-    name: String = "Class scope of ${typeSymbol.name}",
+    name: String = "Class declaration of ${typeSymbol.name}",
+): Scope(parent, name = name)
+
+class PrimaryConstructorScope(
+    parent: Scope? = null,
+    val typeSymbol: TypeSymbol,
+    name: String = "Primary constructor of ${typeSymbol.name}",
 ): Scope(parent, name = name)

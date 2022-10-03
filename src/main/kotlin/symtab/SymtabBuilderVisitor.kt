@@ -35,16 +35,20 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             throw RuntimeException("Redefinition of class '$className'")
 
         val declaredType = typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
-        currentScope.addType(TypeSymbol(className, declaredType))
+        val typeSymbol = TypeSymbol(className, declaredType)
+        currentScope.addType(typeSymbol)
 
-        currentScope = Scope(parent = currentScope, name = "Class declaration of $className")
+        currentScope = ClassDeclarationScope(currentScope, typeSymbol)
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
         }
     }
 
     override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext) {
-        currentScope = Scope(parent = currentScope, name = "Primary constructor")
+        val typeSymbol = (currentScope as? ClassDeclarationScope)?.typeSymbol
+            ?: throw RuntimeException("Primary constructor found, but not in a class declaration")
+
+        currentScope = PrimaryConstructorScope(currentScope, typeSymbol)
         super.visitPrimaryConstructor(ctx).also {
             currentScope = currentScope.parent!!
         }

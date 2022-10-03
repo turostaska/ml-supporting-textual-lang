@@ -2,8 +2,9 @@ package syntax
 
 import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser
-import symtab.ClassScope
+import symtab.ClassDeclarationScope
 import symtab.FunctionScope
+import symtab.PrimaryConstructorScope
 import symtab.Scope
 import symtab.extensions.className
 import symtab.extensions.functionName
@@ -33,7 +34,7 @@ class SyntaxTreeBuilderVisitor(
         val value = ctx.expression().toPythonCode()
 
         when (currentScope) {
-            is ClassScope -> ClassPropertyDeclarationNode(symbol, value, currentNode, false)
+            is ClassDeclarationScope -> ClassPropertyDeclarationNode(symbol, value, currentNode, false)
             else -> PropertyDeclarationNode(symbol, value, currentNode)
         }
 
@@ -53,7 +54,7 @@ class SyntaxTreeBuilderVisitor(
         ClassDeclarationNode(ctx, currentNode).let {
             currentNode = it
         }
-        currentScope = currentScope.children.first { it.name == "Class declaration of ${ctx.className}" }
+        currentScope = currentScope.children.first { it is ClassDeclarationScope && it.typeSymbol.name == ctx.className }
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             currentNode = currentNode.parent!!
@@ -61,7 +62,7 @@ class SyntaxTreeBuilderVisitor(
     }
 
     override fun visitPrimaryConstructor(ctx: kobraParser.PrimaryConstructorContext) {
-        currentScope = currentScope.children.first { it.name == "Primary constructor" }
+        currentScope = currentScope.children.first { it is PrimaryConstructorScope }
         super.visitPrimaryConstructor(ctx).also {
             currentScope = currentScope.parent!!
         }
@@ -69,7 +70,7 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val value = this.expression().toPythonCode()
+        val value = this.expression()?.toPythonCode() ?: ""
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
 
         if (isMember) {
