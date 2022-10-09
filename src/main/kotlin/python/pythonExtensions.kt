@@ -34,7 +34,7 @@ fun Atom_exprContext.toKobraTypeName() = if (this.isOptionalType()) {
     TypeNames.pythonTypeNamesToKobraMap[typeNamePy]?.plus("?")
         ?: throw RuntimeException("No mapping for Python type '${this.text}'")
 } else {
-    val typeNamePy = atom().NAME().text
+    val typeNamePy = atom().NAME()?.text ?: atom().text
     TypeNames.pythonTypeNamesToKobraMap[typeNamePy]
         ?: throw RuntimeException("No mapping for Python type '${this.text}'")
 }
@@ -43,7 +43,6 @@ val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
     get() = this.parameters()?.typedargslist()?.tfpdef()?.filter { it.isNotSelf() }
         ?.mapNotNull { it.NAME()?.text to it.test().compatibleTypes() }
         ?.toMap()
-        // If value is union: list of all types; else: list of the one listed type
         ?.mapValues {
             it.value.let { typeNamesPy ->
                 typeNamesPy.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeName() }
