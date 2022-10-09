@@ -7,11 +7,12 @@ import symtab.SymtabBuilderVisitor
 import syntax.SyntaxTreeBuilderVisitor
 import syntax.generateCode
 import util.Resources
+import util.runPythonScript
 
 val symtabBuilder = SymtabBuilderVisitor()
 
 fun main() {
-    val code = Resources.read("basic_class_declaration")
+    val code = Resources.read("hello_world.kb")
     val lexer = kobraLexer(CharStreams.fromString(code))
     val tokens = CommonTokenStream(lexer)
     val program = kobraParser(tokens).program()
@@ -20,9 +21,10 @@ fun main() {
 
     symtabBuilder.visit(program)
 
-    val syntaxTreeBuilder = SyntaxTreeBuilderVisitor(symtabBuilder.globalScope, symtabBuilder.typeHierarchy).also {
+    val syntaxTreeBuilder = SyntaxTreeBuilderVisitor(symtabBuilder.globalScope).also {
         it.visit(program)
     }
 
-    syntaxTreeBuilder.generateCode().let(::println)
+    val pythonCode = syntaxTreeBuilder.generateCode()
+    pythonCode.runPythonScript()
 }

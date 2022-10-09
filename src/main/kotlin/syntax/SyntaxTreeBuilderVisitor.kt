@@ -11,16 +11,14 @@ import symtab.extensions.functionName
 import symtab.extensions.isMember
 import syntax.expression.toPythonCode
 import syntax.node.*
-import type.TypeHierarchy
 
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
     private val globalScope: Scope,
-    private val typeHierarchy: TypeHierarchy,
 ): kobraBaseVisitor<Unit>() {
     val syntaxTree = SyntaxTree()
     private lateinit var currentNode: SyntaxTreeNode
-    private lateinit var currentScope: Scope // todo: kipróbálni nélküle
+    private lateinit var currentScope: Scope
 
     override fun visitProgram(ctx: kobraParser.ProgramContext) {
         currentNode = syntaxTree.root
@@ -37,8 +35,6 @@ class SyntaxTreeBuilderVisitor(
             is ClassDeclarationScope -> ClassPropertyDeclarationNode(symbol, value, currentNode, false)
             else -> PropertyDeclarationNode(symbol, value, currentNode)
         }
-
-        super.visitPropertyDeclaration(ctx)
     }
 
     override fun visitAssignment(ctx: kobraParser.AssignmentContext): Unit = ctx.run {
@@ -98,11 +94,8 @@ class SyntaxTreeBuilderVisitor(
         currentScope = currentScope.parent!!
     }
 
-    override fun visitJumpExpression(ctx: kobraParser.JumpExpressionContext): Unit = ctx.run {
-        // todo: ehhez nem kell a symtab?
-        ReturnStatementNode(currentNode, this.expression().toPythonCode())
-
-        super.visitJumpExpression(ctx)
+    override fun visitExpression(ctx: kobraParser.ExpressionContext): Unit = ctx.run {
+        ExpressionNode(currentNode, this)
     }
 }
 
