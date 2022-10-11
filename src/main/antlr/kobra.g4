@@ -3,7 +3,19 @@ grammar kobra;
 // SECTION: general
 
 program
-    : NL* statements NL* EOF
+    : NL* importList statements NL* EOF
+    ;
+
+importList
+    : importHeader*
+    ;
+
+importHeader
+    : IMPORT identifier (DOT MULT | importAlias)? semi?
+    ;
+
+importAlias
+    : AS simpleIdentifier
     ;
 
 declaration

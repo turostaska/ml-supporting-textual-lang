@@ -105,19 +105,26 @@ open class Scope(
 }
 
 class FunctionScope(
-    parent: Scope? = null,
+    parent: Scope?,
     val methodSymbol: MethodSymbol,
     name: String = "Function scope of ${methodSymbol.name}",
 ): Scope(parent, name = name)
 
 class ClassDeclarationScope(
-    parent: Scope? = null,
+    parent: Scope?,
     val typeSymbol: TypeSymbol,
     name: String = "Class declaration of ${typeSymbol.name}",
 ): Scope(parent, name = name)
 
 class PrimaryConstructorScope(
-    parent: Scope? = null,
+    parent: Scope?,
     val typeSymbol: TypeSymbol,
     name: String = "Primary constructor of ${typeSymbol.name}",
+): Scope(parent, name = name)
+
+class ModuleScope(
+    parent: Scope?,
+    val moduleName: String,
+    val importAlias: String? = null,
+    name: String = "Module scope of $moduleName",
 ): Scope(parent, name = name)
