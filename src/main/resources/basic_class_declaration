@@ -1,11 +1,18 @@
 // comments
 val intVal = 8
 
+// B-terv: két típus uniója a típusrendszerbe
+
 class Image2d
 
 class Compose
 
 class Foo : Image2d(), Compose()
+
+fun func(a: Int, b: Foo, c: String): Int {
+    val intVal = 3
+    return intVal
+}
 
 class Dataset
 
@@ -15,6 +22,7 @@ class Dataset
     val transform: Compose? = null,
     val unaligned: Boolean = true,
     srcMask: Image2d, // todo: missing
+    val intVal: Int,
 ) : Dataset() {
     val foo: Int = 0
     var bar = "asd"

@@ -20,14 +20,25 @@ open class Scope(
         resolveVariableLocally(name) ?: this.parent?.resolveVariable(name)
 
     fun resolveType(name: String): TypeSymbol? =
-        symbols.find { it.name == name && it is TypeSymbol } as? TypeSymbol
+        symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
             ?: this.parent?.resolveType(name)
 
     fun resolveMethodLocally(name: String): MethodSymbol? =
-        symbols.find { it.name == name && it is MethodSymbol } as? MethodSymbol
+        symbols.findLast { it.name == name && it is MethodSymbol } as? MethodSymbol
 
     fun resolveVariableLocally(name: String): VariableSymbol? =
-        symbols.find { it.name == name && it is VariableSymbol } as? VariableSymbol
+        symbols.findLast { it.name == name && it is VariableSymbol } as? VariableSymbol
+
+    fun resolve(name: String): Symbol? = symbols.findLast { it.name == name }
+
+    fun findModuleOrClassScope(name: String): Scope? =
+        children.findLast {
+            it is ModuleScope && it.moduleName == name ||
+            it is ClassDeclarationScope && it.className == name
+        }
+
+    fun findClassScope(name: String): ClassDeclarationScope? =
+        children.findLast { it is ClassDeclarationScope && it.className == name } as? ClassDeclarationScope
 
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
@@ -47,6 +58,12 @@ open class Scope(
             is TypeSymbol -> {
                 if (symbols.find { it.name == symbol.name && it is TypeSymbol && it.type == symbol.type } != null)
                     throw RuntimeException("Redefinition of type ${symbol.name} in scope ${this.name}")
+                symbol
+            }
+
+            is ModuleSymbol -> {
+                if (symbols.find { it is ModuleSymbol && it.moduleScope == symbol.moduleScope } != null)
+                    throw RuntimeException("Redefinition of module ${symbol.name}")
                 symbol
             }
         }
@@ -114,7 +131,9 @@ class ClassDeclarationScope(
     parent: Scope?,
     val typeSymbol: TypeSymbol,
     name: String = "Class declaration of ${typeSymbol.name}",
-): Scope(parent, name = name)
+): Scope(parent, name = name) {
+    val className = typeSymbol.name
+}
 
 class PrimaryConstructorScope(
     parent: Scope?,

@@ -1,10 +1,10 @@
 package util
 
-import java.io.FileNotFoundException
+import java.io.File
 
 object Resources {
-    fun readOrNull(name: String) = javaClass.classLoader.getResource(name)?.readText()
+    fun readFromClasspathOrNull(name: String) = javaClass.classLoader.getResource(name)?.readText()
 
-    fun read(name: String) = readOrNull(name)
-        ?: throw FileNotFoundException("Resource with name $name can't be found.")
+    fun read(name: String) = readFromClasspathOrNull(name)
+        ?: File(name).readText()
 }

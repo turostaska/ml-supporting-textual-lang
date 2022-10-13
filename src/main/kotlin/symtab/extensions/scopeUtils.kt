@@ -7,3 +7,6 @@ fun Scope.resolveTypeOrThrow(name: String) =
 
 fun Scope.resolveMethodOrThrow(name: String) =
     resolveMethod(name) ?: throw RuntimeException("Method symbol '$name' does not exist in scope ${this.name}")
+
+fun Scope.resolveOrThrow(name: String) = resolve(name)
+    ?: throw RuntimeException("Symbol '$name' does not exist in scope ${this.name}")

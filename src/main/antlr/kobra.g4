@@ -170,6 +170,11 @@ postfixUnaryExpression
 postfixUnarySuffix // todo
     : postfixUnaryOperator
     | callSuffix
+    | navigationSuffix
+    ;
+
+navigationSuffix
+    : memberAccessOperator NL* (simpleIdentifier | parenthesizedExpression | CLASS)
     ;
 
 unaryPrefix
@@ -349,6 +354,11 @@ semi
     : (SEMICOLON | NL) NL*
     ;
 
+memberAccessOperator
+    : NL* DOT
+    | COLONCOLON
+    ;
+
 semis
     : (SEMICOLON | NL)+
     ;
@@ -424,6 +434,7 @@ LCURL: '{';
 RCURL: '}';
 COMMA: ',';
 COLON: ':';
+COLONCOLON: '::';
 ASSIGNMENT: '=';
 QUEST: '?' Hidden;
 CONJ: '&&';

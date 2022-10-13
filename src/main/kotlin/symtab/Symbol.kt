@@ -13,8 +13,14 @@ sealed interface Symbol {
     val type: String
 }
 
+class ModuleSymbol(
+    val moduleScope: ModuleScope,
+) : Symbol {
+    override val name: String = moduleScope.moduleName
+    override val type: String = "Module symbol of module '$name'"
+}
+
 // todo: visibility
-// todo: type should be TypeSymbol
 class VariableSymbol(
     override val name: String,
     val typeSymbol: TypeSymbol,

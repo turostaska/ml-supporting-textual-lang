@@ -13,7 +13,7 @@ class PythonLibVisitor(
     private val globalScope: Scope,
 ) : Python3ParserBaseVisitor<Unit>() {
     private val classesToVisitPy = listOf("int", "float", "str", "bool", "list", "range")
-    private var currentlyVisitedClass: String? = null
+    private var currentlyVisitedClass: String? = null  // todo: only for debugging purposes
     private var currentTypeSymbol: TypeSymbol? = null
 
     private val classesToVisit
@@ -21,8 +21,7 @@ class PythonLibVisitor(
             pythonTypeNamesToKobraMap[it] ?: throw RuntimeException("Python type $it is not mapped to Kobra type")
         }
 
-    override fun visitClassdef(ctx: Python3Parser.ClassdefContext) {
-        val classNamePy = ctx.NAME().text
+    override fun visitClassdef(ctx: Python3Parser.ClassdefContext): Unit = ctx.run {
         if (classNamePy !in classesToVisitPy) return
 
         val className = pythonTypeNamesToKobraMap[classNamePy]
@@ -37,30 +36,28 @@ class PythonLibVisitor(
         currentTypeSymbol = null
     }
 
-    override fun visitFuncdef(ctx: Python3Parser.FuncdefContext) {
-        val functionName = ctx.NAME().text
-        val params =
-            try {
-                ctx.parameterNamesToTypeNameMap.mapValues {
-                    val typeNames = it.value
-                    it.value.map { typeName ->
-                        globalScope.resolveType(typeName)
-                            ?: throw RuntimeException("Can't find symbol for type '$typeNames' in global scope")
-                    }
+    override fun visitFuncdef(ctx: Python3Parser.FuncdefContext): Unit = ctx.run {
+        val params = try {
+            parameterNamesToTypeNameMap.mapValues {
+                val typeNames = it.value
+                it.value.map { typeName ->
+                    globalScope.resolveType(typeName)
+                        ?: throw RuntimeException("Can't find symbol for type '$typeNames' in global scope")
                 }
-            } catch (e: Exception) {
-                println("Caught exception: ${e.message}, continuing...")
-                return
             }
+        } catch (e: Exception) {
+            println("Caught exception: ${e.message}, continuing...")
+            return
+        }
 
-        val returnType = ctx.returnTypeName?.also {
+        val returnType = returnTypeName?.also {
             if (it !in classesToVisit) return
         }
 
         println("Function definition of ${currentlyVisitedClass?.plus(".$functionName") ?: functionName}")
 
-        globalScope += currentTypeSymbol?.let {
-            ClassMethodSymbol(functionName, returnType, params, currentTypeSymbol!!)
+        globalScope += currentTypeSymbol?.let { currentTypeSymbol ->
+            ClassMethodSymbol(functionName, returnType, params, currentTypeSymbol)
         } ?: MethodSymbol(functionName, returnType, params)
 
         super.visitFuncdef(ctx)

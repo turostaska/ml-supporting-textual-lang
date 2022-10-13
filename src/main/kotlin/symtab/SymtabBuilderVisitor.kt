@@ -3,6 +3,7 @@ package symtab
 import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser.*
 import symtab.extensions.*
+import symtab.import.ImportedLibraryReader
 import type.BuiltInTypes
 import type.TypeHierarchy
 import type.TypeNames
@@ -16,6 +17,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     val globalScope = Scope(parent = null)
     var currentScope: Scope = globalScope
     val typeHierarchy = TypeHierarchy(this)
+    val libReader = ImportedLibraryReader(globalScope)
 
     private val typeInference = TypeInference(this)
 
@@ -129,6 +131,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         check((currentScope as FunctionScope).methodSymbol.returnType == this.expression().inferredType)
 
         super.visitJumpExpression(this)
+    }
+
+    override fun visitImportHeader(ctx: ImportHeaderContext): Unit = ctx.run {
+        val moduleName = identifier().simpleIdentifier().first().text
+        ImportedLibraryReader(globalScope).readAndAddAllSymbols(moduleName)
+        super.visitImportHeader(this)
     }
 
     private fun String.subtypeOf(other: String) =

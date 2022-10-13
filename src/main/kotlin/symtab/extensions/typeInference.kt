@@ -1,9 +1,13 @@
 package symtab.extensions
 
 import com.kobra.kobraParser
+import symtab.ClassMethodSymbol
+import symtab.ModuleSymbol
 import symtab.SymtabBuilderVisitor
+import symtab.VariableSymbol
 import type.TypeNames
 import util.second
+import util.throwError
 
 class TypeInference(
     private val symtabBuilder: SymtabBuilderVisitor,
@@ -88,17 +92,50 @@ class TypeInference(
     private val kobraParser.PrefixUnaryExpressionContext.inferredType: String
         get() = this.postfixUnaryExpression().inferredType
 
-    private val kobraParser.PostfixUnaryExpressionContext.inferredType: String
-        get() {
-            val callSuffix = postfixUnarySuffix()?.firstOrNull()?.callSuffix()
-            if (callSuffix != null) {
-                // todo: nem veszi figyelembe a paramétereket
-                return this.primaryExpression().simpleIdentifier().Identifier().text.let {
-                    currentScope.resolveMethodOrThrow(it).returnTypeName
-                }
-            }
+    // first.second.third.fourth().fifth
+    /**
+     * symbol = currentScope.findSymbol("first")
+     * IF (  )
+     */
+    private val kobraParser.PostfixUnaryExpressionContext.inferredType: String get() {
+        if (postfixUnarySuffix()?.firstOrNull() == null)
             return this.primaryExpression().inferredType
+
+        val receiverId = primaryExpression().simpleIdentifier().text
+
+        var currentScope = currentScope
+        var receiver = currentScope.resolveOrThrow(receiverId)
+        for (suffix in postfixUnarySuffix()) {
+            val suffixId = suffix.navigationSuffix().simpleIdentifier().text
+            when {
+                suffix.isStaticNavigationSuffix() -> {
+                    require(receiver is ClassMethodSymbol || receiver is ModuleSymbol)
+                    currentScope = currentScope.findModuleOrClassScope(receiverId)!!
+                    receiver = currentScope.resolveOrThrow(suffixId)
+                }
+
+                suffix.isMemberNavigationSuffix() -> {
+                    require(receiver !is ClassMethodSymbol && receiver !is ModuleSymbol)
+
+                    when(receiver) {
+                        is VariableSymbol, is ClassMethodSymbol -> {
+                            receiver = currentScope.resolveOrThrow(suffixId)
+                            currentScope = currentScope.findClassScope(receiver.type)!!
+                        }
+                        else -> throwError { "Unknown suffix: '${suffix.text}'" }
+                    }
+                }
+
+                suffix.isCallSuffix() -> {
+                    // todo: nem veszi figyelembe a paramétereket
+                    return currentScope.resolveMethodOrThrow(receiver.name).returnTypeName
+                }
+                else -> TODO()
+            }
         }
+
+        return receiver.type
+    }
 
     private val kobraParser.PrimaryExpressionContext.inferredType
         get() = when {

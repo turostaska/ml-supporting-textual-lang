@@ -12,6 +12,8 @@ val FuncdefContext.returnTypeNamePy: String?
 val FuncdefContext.returnTypeName: String?
     get() = this.returnTypeNamePy?.let { TypeNames.pythonTypeNamesToKobraMap[it] }
 
+val FuncdefContext.functionName: String get() = NAME().text
+
 fun TfpdefContext.isNotSelf() = this.NAME()?.text != "self"
 
 val TestContext.atomExpr get() = this.or_test(0)?.and_test(0)?.not_test(0)?.comparison()?.expr(0)
@@ -41,10 +43,12 @@ fun Atom_exprContext.toKobraTypeName() = if (this.isOptionalType()) {
 
 val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
     get() = this.parameters()?.typedargslist()?.tfpdef()?.filter { it.isNotSelf() }
-        ?.mapNotNull { it.NAME()?.text to it.test().compatibleTypes() }
+        ?.mapNotNull { it.NAME()?.text to it.test()?.compatibleTypes() }
         ?.toMap()
         ?.mapValues {
             it.value.let { typeNamesPy ->
-                typeNamesPy.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeName() }
+                typeNamesPy?.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeName() }
             }
         }?.filterNonNull() ?: emptyMap()
+
+val ClassdefContext.classNamePy: String get() = NAME().text
