@@ -2,6 +2,7 @@ package python
 
 import com.kobra.Python3Parser.*
 import type.TypeNames
+import type.TypeNames.ANY_N
 import util.filterNonNull
 
 val FuncdefContext.returnTypeNamePy: String?
@@ -31,14 +32,12 @@ fun TestContext.compatibleTypes() = if (this.isUnionType()) {
     listOf(this.atomExpr)
 }
 
-fun Atom_exprContext.toKobraTypeName() = if (this.isOptionalType()) {
+fun Atom_exprContext.toKobraTypeNameOrAny() = if (this.isOptionalType()) {
     val typeNamePy = trailer(0).subscriptlist().subscript_(0).test(0).text
-    TypeNames.pythonTypeNamesToKobraMap[typeNamePy]?.plus("?")
-        ?: throw RuntimeException("No mapping for Python type '${this.text}'")
+    TypeNames.pythonTypeNamesToKobraMap[typeNamePy]?.plus("?") ?: ANY_N
 } else {
     val typeNamePy = atom().NAME()?.text ?: atom().text
-    TypeNames.pythonTypeNamesToKobraMap[typeNamePy]
-        ?: throw RuntimeException("No mapping for Python type '${this.text}'")
+    TypeNames.pythonTypeNamesToKobraMap[typeNamePy] ?: ANY_N
 }
 
 val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
@@ -47,7 +46,7 @@ val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
         ?.toMap()
         ?.mapValues {
             it.value.let { typeNamesPy ->
-                typeNamesPy?.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeName() }
+                typeNamesPy?.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeNameOrAny() }
             }
         }?.filterNonNull() ?: emptyMap()
 

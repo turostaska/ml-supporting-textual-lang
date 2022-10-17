@@ -17,7 +17,6 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     val globalScope = Scope(parent = null)
     var currentScope: Scope = globalScope
     val typeHierarchy = TypeHierarchy(this)
-    val libReader = ImportedLibraryReader(globalScope)
 
     private val typeInference = TypeInference(this)
 
@@ -135,7 +134,15 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     override fun visitImportHeader(ctx: ImportHeaderContext): Unit = ctx.run {
         val moduleName = identifier().simpleIdentifier().first().text
-        ImportedLibraryReader(globalScope).readAndAddAllSymbols(moduleName)
+        val importAlias = importAlias()?.simpleIdentifier()?.Identifier()?.text ?: moduleName
+
+        val moduleScope = ModuleScope(currentScope, moduleName, importAlias)
+        currentScope.add(ModuleSymbol(moduleScope))
+
+        currentScope = moduleScope
+        ImportedLibraryReader(this@SymtabBuilderVisitor, typeHierarchy).readAndAddAllSymbols(moduleName)
+        currentScope = moduleScope.parent!!
+
         super.visitImportHeader(this)
     }
 

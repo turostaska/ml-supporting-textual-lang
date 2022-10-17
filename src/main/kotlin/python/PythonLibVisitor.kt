@@ -2,32 +2,46 @@ package python
 
 import com.kobra.Python3Parser
 import com.kobra.Python3ParserBaseVisitor
-import symtab.ClassMethodSymbol
-import symtab.MethodSymbol
-import symtab.Scope
-import symtab.TypeSymbol
+import symtab.*
+import type.TypeHierarchy
+import type.TypeNames.ANY_N
 import type.TypeNames.pythonTypeNamesToKobraMap
 
 // todo: fáj a szemem, ezt nagyon ki kell takarítani
 class PythonLibVisitor(
     private val globalScope: Scope,
+    private val typeHierarchy: TypeHierarchy,
 ) : Python3ParserBaseVisitor<Unit>() {
-    private val classesToVisitPy = listOf("int", "float", "str", "bool", "list", "range")
+    private val mappedTypesPy = listOf("int", "float", "str", "bool", "list", "range")
     private var currentlyVisitedClass: String? = null  // todo: only for debugging purposes
     private var currentTypeSymbol: TypeSymbol? = null
+    private var currentScope = globalScope
 
-    private val classesToVisit
-        get() = classesToVisitPy.map {
+    private val mappedTypes
+        get() = mappedTypesPy.map {
             pythonTypeNamesToKobraMap[it] ?: throw RuntimeException("Python type $it is not mapped to Kobra type")
         }
 
     override fun visitClassdef(ctx: Python3Parser.ClassdefContext): Unit = ctx.run {
-        if (classNamePy !in classesToVisitPy) return
+        val className = pythonTypeNamesToKobraMap[classNamePy] ?: classNamePy
+        currentTypeSymbol = if (classNamePy in mappedTypesPy) {
+            currentScope.resolveType(className)
+                ?: throw RuntimeException("Can't find type symbol for type '$className' in global scope")
+        } else null
 
-        val className = pythonTypeNamesToKobraMap[classNamePy]
-            ?: throw RuntimeException("Can't resolve Python type '$classNamePy' to Kobra type")
-        currentTypeSymbol = globalScope.resolveType(className)
-            ?: throw RuntimeException("Can't find type symbol for type '$className' in global scope")
+        if (classNamePy !in mappedTypesPy) {
+            // TODO
+            //   val superClasses = this.arglist().argument().map { it.text }
+
+            val declaredType = typeHierarchy.addType(className, classNamePy, emptySet())
+            val typeSymbol = TypeSymbol(className, declaredType)
+            currentScope.addType(typeSymbol)
+
+            currentScope = ClassDeclarationScope(currentScope, typeSymbol)
+            super.visitClassdef(ctx)
+            currentScope = currentScope.parent!!
+            return
+        }
 
         currentlyVisitedClass = currentlyVisitedClass?.plus(".$classNamePy") ?: classNamePy
         println("Class definition of $currentlyVisitedClass")
@@ -37,28 +51,25 @@ class PythonLibVisitor(
     }
 
     override fun visitFuncdef(ctx: Python3Parser.FuncdefContext): Unit = ctx.run {
-        val params = try {
-            parameterNamesToTypeNameMap.mapValues {
-                val typeNames = it.value
-                it.value.map { typeName ->
-                    globalScope.resolveType(typeName)
-                        ?: throw RuntimeException("Can't find symbol for type '$typeNames' in global scope")
-                }
+        val params = parameterNamesToTypeNameMap.mapValues {
+            it.value.map { typeName ->
+                currentScope.resolveType(typeName) ?: globalScope.resolveBuiltInType(ANY_N)!!
             }
-        } catch (e: Exception) {
-            println("Caught exception: ${e.message}, continuing...")
-            return
         }
 
         val returnType = returnTypeName?.also {
-            if (it !in classesToVisit) return
+            if (it !in mappedTypes) return
         }
 
         println("Function definition of ${currentlyVisitedClass?.plus(".$functionName") ?: functionName}")
 
-        globalScope += currentTypeSymbol?.let { currentTypeSymbol ->
-            ClassMethodSymbol(functionName, returnType, params, currentTypeSymbol)
-        } ?: MethodSymbol(functionName, returnType, params)
+        // Some function headers may be identical since some types are not mapped yet and are substituted by 'Any?'.
+        // If the type symbol can't be added, we should continue.
+        try {
+            currentScope += currentTypeSymbol?.let { currentTypeSymbol ->
+                ClassMethodSymbol(functionName, returnType, params, currentTypeSymbol)
+            } ?: MethodSymbol(functionName, returnType, params)
+        } catch (_: RuntimeException) {}
 
         super.visitFuncdef(ctx)
     }

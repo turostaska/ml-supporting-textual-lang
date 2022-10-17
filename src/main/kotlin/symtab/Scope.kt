@@ -23,6 +23,10 @@ open class Scope(
         symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
             ?: this.parent?.resolveType(name)
 
+    fun resolveBuiltInType(name: String): BuiltInTypeSymbol? =
+        symbols.findLast { it.name == name && it is BuiltInTypeSymbol } as? BuiltInTypeSymbol
+            ?: this.parent?.resolveBuiltInType(name)
+
     fun resolveMethodLocally(name: String): MethodSymbol? =
         symbols.findLast { it.name == name && it is MethodSymbol } as? MethodSymbol
 
