@@ -8,7 +8,9 @@ import org.antlr.v4.runtime.CommonTokenStream
 import symtab.SymtabBuilderVisitor
 import type.TypeHierarchy
 import util.Resources
+import util.pathIfExistsElseNull
 import util.tryOrNull
+import java.io.File
 import java.io.FileNotFoundException
 
 const val GLOBAL_PACKAGES_PATH = "/usr/lib64/python3.10"
@@ -18,14 +20,29 @@ const val LOCAL_VS_CODE_PACKAGES_PATH = "/home/rado/.vscode/extensions/ms-python
 
 val SITE_PACKAGE_DIRS = listOf(GLOBAL_SITE_PACKAGES_PATH, LOCAL_SITE_PACKAGES_PATH)
 
-private fun getSourceOfPackage(packageName: String): String {
-    val packageName = packageName.replace('.', '/')
+fun findPathToMainModule(packageName: String): String {
+    return File("$GLOBAL_PACKAGES_PATH/$packageName.py").pathIfExistsElseNull() ?:
+        SITE_PACKAGE_DIRS.map { dir ->
+            File("$dir/$packageName/__init__.py").pathIfExistsElseNull() ?:
+            File("$dir/$packageName.py").pathIfExistsElseNull()
+        }.find { it != null } ?: throw FileNotFoundException("Package not found: $packageName")
+}
+
+// todo: eltárolni a jelenlegi mappáját a visitelt python fájlnak
+private fun getSourceOfPackage(
+    mainModuleName: String,
+    subModuleName: String? = null,
+): String {
+    val packageName = subModuleName?.let { "$mainModuleName/$it" } ?: mainModuleName
 
     return tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::read) } ?:
         tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::read) } ?:
-        SITE_PACKAGE_DIRS.map { dir -> tryOrNull {
-            "$dir/$packageName/__init__.py".let(Resources::read)
-        } }.find { it != null } ?:
+        SITE_PACKAGE_DIRS.map { dir ->
+            tryOrNull { "$dir/$packageName/__init__.pyi".let(Resources::read) } ?:
+            tryOrNull { "$dir/$packageName/__init__.py".let(Resources::read) } ?:
+            tryOrNull { "$dir/$packageName.pyi".let(Resources::read) } ?:
+            tryOrNull { "$dir/$packageName.py".let(Resources::read) }
+        }.find { it != null } ?:
         tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::read) } ?:
         tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::read) } ?:
         throw FileNotFoundException("Package not found: $packageName")
