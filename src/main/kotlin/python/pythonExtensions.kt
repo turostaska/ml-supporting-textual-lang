@@ -4,6 +4,7 @@ import com.kobra.Python3Parser.*
 import type.TypeNames
 import type.TypeNames.ANY_N
 import util.filterNonNull
+import util.secondOrNull
 
 val FuncdefContext.returnTypeNamePy: String?
     get() = this.test()?.or_test(0)?.and_test(0)?.not_test(0)?.comparison()?.expr(0)
@@ -51,3 +52,9 @@ val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
         }?.filterNonNull() ?: emptyMap()
 
 val ClassdefContext.classNamePy: String get() = NAME().text
+
+fun Expr_stmtContext.testListComp() = this.testlist_star_expr()?.secondOrNull()?.test()?.firstOrNull()?.or_test()?.firstOrNull()
+    ?.and_test()?.firstOrNull()?.not_test()?.firstOrNull()?.comparison()?.expr()?.firstOrNull()
+    ?.xor_expr()?.firstOrNull()?.and_expr()?.firstOrNull()?.shift_expr()?.firstOrNull()
+    ?.arith_expr()?.firstOrNull()?.term()?.firstOrNull()?.factor()?.firstOrNull()?.power()?.atom_expr()
+    ?.atom()?.testlist_comp()

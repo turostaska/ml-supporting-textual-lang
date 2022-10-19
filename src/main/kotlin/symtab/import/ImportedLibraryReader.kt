@@ -20,20 +20,45 @@ const val LOCAL_VS_CODE_PACKAGES_PATH = "/home/rado/.vscode/extensions/ms-python
 
 val SITE_PACKAGE_DIRS = listOf(GLOBAL_SITE_PACKAGES_PATH, LOCAL_SITE_PACKAGES_PATH)
 
-fun findPathToMainModule(packageName: String): String {
-    return File("$GLOBAL_PACKAGES_PATH/$packageName.py").pathIfExistsElseNull() ?:
-        SITE_PACKAGE_DIRS.map { dir ->
-            File("$dir/$packageName/__init__.py").pathIfExistsElseNull() ?:
-            File("$dir/$packageName.py").pathIfExistsElseNull()
-        }.find { it != null } ?: throw FileNotFoundException("Package not found: $packageName")
+fun findSubmoduleInFolder(folder: String, submoduleName: String): String {
+    return File("$folder/$submoduleName.py").pathIfExistsElseNull()
+        ?: File("$folder/$submoduleName/__init__.py").pathIfExistsElseNull()
+        ?: throw FileNotFoundException("Submodule not found: $submoduleName")
+}
+
+fun findFolderToMainModule(moduleName: String): String {
+    return findPathToMainModule(moduleName).substringBeforeLast('/')
+}
+
+private fun findPathToMainModule(moduleName: String): String {
+    return File("$GLOBAL_PACKAGES_PATH/$moduleName.py").pathIfExistsElseNull()
+        ?: SITE_PACKAGE_DIRS.map { dir ->
+            File("$dir/$moduleName/__init__.py").pathIfExistsElseNull()
+                ?: File("$dir/$moduleName.py").pathIfExistsElseNull()
+        }.find { it != null } ?: throw FileNotFoundException("Package not found: $moduleName")
+}
+
+/**
+ * @param qualifier: Full qualifier of package name separated with dots, e.g.: 'first.second.third.module'
+ */
+fun getSourceOfHierarchicalPackage(qualifier: String): String {
+    val moduleName = qualifier.split(".").last()
+    var parentModules = qualifier.split(".").dropLast(1)
+
+    while (parentModules.isNotEmpty()) {
+        tryOrNull { getSourceOfPackage(moduleName, parentModules) }?.let { return it }
+        parentModules = parentModules.dropLast(1)
+    }
+
+    return getSourceOfPackage(moduleName, emptyList())
 }
 
 // todo: eltárolni a jelenlegi mappáját a visitelt python fájlnak
 private fun getSourceOfPackage(
-    mainModuleName: String,
-    subModuleName: String? = null,
+    moduleName: String,
+    parentModules: List<String>,
 ): String {
-    val packageName = subModuleName?.let { "$mainModuleName/$it" } ?: mainModuleName
+    val packageName = (parentModules.joinToString("/", postfix = "/") + moduleName).removePrefix("/")
 
     return tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::read) } ?:
         tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::read) } ?:
@@ -51,7 +76,7 @@ private fun getSourceOfPackage(
 private val visitedModules = mutableSetOf<String>()
 
 private fun getRootRuleOfPythonPackage(packageName: String): File_inputContext {
-    val source = getSourceOfPackage(packageName)
+    val source = getSourceOfHierarchicalPackage(packageName)
     val lexer = Python3Lexer(CharStreams.fromString(source))
     val tokens = CommonTokenStream(lexer)
     return Python3Parser(tokens).file_input()
@@ -66,7 +91,7 @@ class ImportedLibraryReader(
 
         if (!visitedModules.add(packageName)) return
 
-        ImportedLibVisitor(symtabBuilder, typeHierarchy).visit(rootRule)
+        ImportedLibVisitor(symtabBuilder, typeHierarchy, packageName).visit(rootRule)
     }
 
     fun readAndAddSpecifiedSymbols(packageName: String, symbolsToImportAs: Map<String, String>) {
@@ -74,6 +99,6 @@ class ImportedLibraryReader(
 
         if (!visitedModules.add(packageName)) return
 
-        ImportedLibVisitor(symtabBuilder, typeHierarchy, symbolsToImportAs).visit(rootRule)
+        ImportedLibVisitor(symtabBuilder, typeHierarchy, packageName, symbolsToImportAs).visit(rootRule)
     }
 }
