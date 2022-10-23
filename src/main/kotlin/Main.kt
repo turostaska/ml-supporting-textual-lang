@@ -25,6 +25,6 @@ fun main() {
         it.visit(program)
     }
 
-    val pythonCode = syntaxTreeBuilder.generateCode()
+    val pythonCode = syntaxTreeBuilder.generateCode().also(::println)
     pythonCode.runPythonScript()
 }

@@ -45,6 +45,11 @@ object BuiltInTypes {
     }
     val listN = list.nullableVariant
 
+    val unit = Type(TypeNames.UNIT, false, pythonName = TypeNames.UNIT_PY).also {
+        addBuiltInType(it)
+    }
+    val unitN = unit.nullableVariant
+
     val all = javaClass.kotlin.memberProperties.mapNotNull { it.get(this) as? Type }
 
     private fun Type.insertUnder(type: Type) {

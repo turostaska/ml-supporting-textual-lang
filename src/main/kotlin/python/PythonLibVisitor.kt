@@ -44,7 +44,6 @@ class PythonLibVisitor(
         }
 
         currentlyVisitedClass = currentlyVisitedClass?.plus(".$classNamePy") ?: classNamePy
-        println("Class definition of $currentlyVisitedClass")
         super.visitClassdef(ctx)
         currentlyVisitedClass = null
         currentTypeSymbol = null
@@ -60,8 +59,6 @@ class PythonLibVisitor(
         val returnType = returnTypeName?.also {
             if (it !in mappedTypes) return
         }
-
-        println("Function definition of ${currentlyVisitedClass?.plus(".$functionName") ?: functionName}")
 
         // Some function headers may be identical since some types are not mapped yet and are substituted by 'Any?'.
         // If the type symbol can't be added, we should continue.

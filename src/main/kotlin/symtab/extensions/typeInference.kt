@@ -106,12 +106,12 @@ class TypeInference(
         var currentScope = currentScope
         var receiver = currentScope.resolveOrThrow(receiverId)
         for (suffix in postfixUnarySuffix()) {
-            val suffixId = suffix.navigationSuffix().simpleIdentifier().text
+            val suffixId = suffix.navigationSuffix()?.simpleIdentifier()?.text
             when {
                 suffix.isStaticNavigationSuffix() -> {
                     require(receiver is ClassMethodSymbol || receiver is ModuleSymbol)
                     currentScope = currentScope.findModuleOrClassScope(receiverId)!!
-                    receiver = currentScope.resolveOrThrow(suffixId)
+                    receiver = currentScope.resolveOrThrow(suffixId!!)
                 }
 
                 suffix.isMemberNavigationSuffix() -> {
@@ -119,7 +119,7 @@ class TypeInference(
 
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
-                            receiver = currentScope.resolveOrThrow(suffixId)
+                            receiver = currentScope.resolveOrThrow(suffixId!!)
                             currentScope = currentScope.findClassScope(receiver.type)!!
                         }
                         else -> throwError { "Unknown suffix: '${suffix.text}'" }

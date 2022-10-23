@@ -118,12 +118,29 @@ private fun PrefixUnaryExpressionContext.toPythonCode(): String {
 }
 
 private fun PostfixUnaryExpressionContext.toPythonCode(): String {
-    return if (this.postfixUnarySuffix().any()) {
-        if (postfixUnarySuffix().first().callSuffix() != null) {
-            val params = postfixUnarySuffix().first().callSuffix().valueArguments().valueArgument()
-            "${primaryExpression().simpleIdentifier().text}(${params.joinToString { it.text }})"
-        } else TODO("lehet ez egyáltalán expression?")
-    } else this.primaryExpression().toPythonCode()
+    if (postfixUnarySuffix()?.firstOrNull() == null)
+        return this.primaryExpression().toPythonCode()
+
+    val receiverId = primaryExpression().simpleIdentifier().text
+
+    val code = StringBuilder(receiverId)
+    for (suffix in postfixUnarySuffix()) {
+        val suffixId = suffix.navigationSuffix()?.simpleIdentifier()?.text
+
+        when {
+            suffix.isMemberNavigationSuffix() || suffix.isStaticNavigationSuffix() -> {
+                code.append(".${suffixId!!}")
+            }
+
+            suffix.isCallSuffix() -> {
+                code.append("(${suffix.params().joinToString { it.text }})")
+            }
+
+            else -> TODO()
+        }
+    }
+
+    return code.toString()
 }
 
 private fun PrimaryExpressionContext.toPythonCode(): String {

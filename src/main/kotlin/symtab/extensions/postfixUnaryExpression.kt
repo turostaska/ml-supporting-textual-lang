@@ -9,3 +9,5 @@ fun PostfixUnarySuffixContext.isMemberNavigationSuffix() =
     this.navigationSuffix()?.memberAccessOperator()?.DOT() != null
 
 fun PostfixUnarySuffixContext.isCallSuffix() = this.callSuffix() != null
+
+fun PostfixUnarySuffixContext.params() = callSuffix().valueArguments().valueArgument().toList()

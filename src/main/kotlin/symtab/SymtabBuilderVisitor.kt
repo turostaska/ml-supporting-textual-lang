@@ -79,6 +79,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val type = type()?.text?.trim() ?: expression().inferredType
         val typeSymbol = currentScope.resolveTypeOrThrow(type)
 
+        // todo: rekurzívan feloldani a modulok szkópját
+
         if (currentScope.resolveVariableLocally(name) != null)
             throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
 

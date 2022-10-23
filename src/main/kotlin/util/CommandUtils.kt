@@ -22,4 +22,4 @@ fun String.runPythonScript() = File("./temp.py").also {
     it.deleteOnExit()
 }.runPythonScript()
 
-fun File.runPythonScript() = "python ${this.absolutePath}".runCommand()
+fun File.runPythonScript() = "python3 ${this.absolutePath}".runCommand()

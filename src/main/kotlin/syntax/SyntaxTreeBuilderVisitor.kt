@@ -11,6 +11,7 @@ import symtab.extensions.functionName
 import symtab.extensions.isMember
 import syntax.expression.toPythonCode
 import syntax.node.*
+import util.secondOrNull
 
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
@@ -24,6 +25,15 @@ class SyntaxTreeBuilderVisitor(
         currentNode = syntaxTree.root
         currentScope = globalScope
         super.visitProgram(ctx)
+    }
+
+    override fun visitImportHeader(ctx: kobraParser.ImportHeaderContext): Unit = ctx.run {
+        val moduleName = identifier().simpleIdentifier().first().Identifier().text
+        val importAlias = identifier().simpleIdentifier()?.secondOrNull()?.Identifier()?.text
+
+        ImportHeaderNode(moduleName, importAlias, currentNode)
+
+        super.visitImportHeader(ctx)
     }
 
     override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {

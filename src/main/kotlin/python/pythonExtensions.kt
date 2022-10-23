@@ -12,7 +12,7 @@ val FuncdefContext.returnTypeNamePy: String?
         ?.atom()?.NAME()?.text
 
 val FuncdefContext.returnTypeName: String?
-    get() = this.returnTypeNamePy?.let { TypeNames.pythonTypeNamesToKobraMap[it] }
+    get() = this.returnTypeNamePy?.let { TypeNames.pythonTypeNamesToKobraMap[it] } ?: returnTypeNamePy
 
 val FuncdefContext.functionName: String get() = NAME().text
 
@@ -58,3 +58,8 @@ fun Expr_stmtContext.testListComp() = this.testlist_star_expr()?.secondOrNull()?
     ?.xor_expr()?.firstOrNull()?.and_expr()?.firstOrNull()?.shift_expr()?.firstOrNull()
     ?.arith_expr()?.firstOrNull()?.term()?.firstOrNull()?.factor()?.firstOrNull()?.power()?.atom_expr()
     ?.atom()?.testlist_comp()
+
+fun TestlistContext.atomExpr() = this.test()?.firstOrNull()?.or_test()?.firstOrNull()?.and_test()?.firstOrNull()
+    ?.not_test()?.firstOrNull()?.comparison()?.expr()?.firstOrNull()?.xor_expr()?.firstOrNull()?.and_expr()
+    ?.firstOrNull()?.shift_expr()?.firstOrNull()?.arith_expr()?.firstOrNull()?.term()?.firstOrNull()?.factor()
+    ?.firstOrNull()?.power()?.atom_expr()
