@@ -3,8 +3,10 @@ package python
 import com.kobra.Python3Parser
 import com.kobra.Python3ParserBaseVisitor
 import symtab.*
+import symtab.extensions.resolveTypeOrThrow
 import type.TypeHierarchy
 import type.TypeNames.ANY_N
+import type.TypeNames.UNIT
 import type.TypeNames.pythonTypeNamesToKobraMap
 
 // todo: fáj a szemem, ezt nagyon ki kell takarítani
@@ -56,9 +58,10 @@ class PythonLibVisitor(
             }
         }
 
-        val returnType = returnTypeName?.also {
+        val returnTypeName = returnTypeName?.also {
             if (it !in mappedTypes) return
-        }
+        } ?: UNIT
+        val returnType = currentScope.resolveTypeOrThrow(returnTypeName)
 
         // Some function headers may be identical since some types are not mapped yet and are substituted by 'Any?'.
         // If the type symbol can't be added, we should continue.

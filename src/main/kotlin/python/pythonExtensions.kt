@@ -11,8 +11,8 @@ val FuncdefContext.returnTypeNamePy: String?
         ?.xor_expr(0)?.and_expr(0)?.shift_expr(0)?.arith_expr(0)?.term(0)?.factor(0)?.power()?.atom_expr()
         ?.atom()?.NAME()?.text
 
-val FuncdefContext.returnTypeName: String?
-    get() = this.returnTypeNamePy?.let { TypeNames.pythonTypeNamesToKobraMap[it] } ?: returnTypeNamePy
+val FuncdefContext.returnTypeName: String
+    get() = this.returnTypeNamePy?.let { TypeNames.pythonTypeNamesToKobraMap[it] } ?: returnTypeNamePy ?: TypeNames.UNIT
 
 val FuncdefContext.functionName: String get() = NAME().text
 

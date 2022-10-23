@@ -4,10 +4,7 @@ import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser.*
 import symtab.extensions.*
 import symtab.import.ImportedLibraryReader
-import type.BuiltInTypes
-import type.TypeHierarchy
-import type.TypeNames
-import type.util.asType
+import type.*
 import type.util.contains
 import type.util.find
 import type.util.findInSubtree
@@ -60,7 +57,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val type = this.type().text.trim()
         val typeSymbol = currentScope.resolveTypeOrThrow(type)
 
-        if (expression()?.inferredType?.isNotSubtypeOf(type) == true)
+        if (expression()?.inferredType?.isNotSubtypeOf(typeSymbol) == true)
             throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
 
         if (isNotMember) {
@@ -76,16 +73,15 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     override fun visitPropertyDeclaration(ctx: PropertyDeclarationContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val type = type()?.text?.trim() ?: expression().inferredType
-        val typeSymbol = currentScope.resolveTypeOrThrow(type)
+        val typeSymbol = type()?.text?.trim()?.let { currentScope.resolveType(it) } ?: expression().inferredType
 
         // todo: rekurzívan feloldani a modulok szkópját
 
         if (currentScope.resolveVariableLocally(name) != null)
             throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
 
-        if (expression().inferredType.isNotSubtypeOf(type))
-            throw RuntimeException("Invalid value: $type should be given but ${expression().inferredType} found")
+        if (expression().inferredType.isNotSubtypeOf(typeSymbol))
+            throw RuntimeException("Invalid value: $typeSymbol should be given but ${expression().inferredType} found")
 
         currentScope += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
         super.visitPropertyDeclaration(this)
@@ -97,7 +93,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             ?: throw RuntimeException("Attempting to reassign value of undeclared variable $varName")
 
         if (symbol.isMutable) {
-            if (expression().inferredType.isNotSubtypeOf(symbol.type)) {
+            if (expression().inferredType.isNotSubtypeOf(symbol.typeSymbol)) {
                 throw RuntimeException(
                     "Can't assign a value of type ${expression().inferredType} to a variable of type ${symbol.type}"
                 )
@@ -112,12 +108,13 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             "Redeclaration of method '$functionName' in scope '${currentScope.name}'"
         }
 
-        require(statements.lastOrNull()?.isReturnStatement == true || returnTypeName == TypeNames.UNIT) {
+        val returnType = currentScope.resolveTypeOrThrow(returnTypeName)
+        require(statements.lastOrNull()?.isReturnStatement == true || returnType == globalScope.UNIT) {
             "Last statement must be return OR return type must be Unit"
         }
 
         val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value).let(::listOf) }
-        val methodSymbol = MethodSymbol(functionName, returnTypeName, params)
+        val methodSymbol = MethodSymbol(functionName, returnType, params)
         currentScope += methodSymbol
 
         currentScope = FunctionScope(currentScope, methodSymbol).apply {
@@ -148,10 +145,11 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitImportHeader(this)
     }
 
-    private fun String.subtypeOf(other: String) =
-        typeHierarchy.find(other).findInSubtree(this.asType()) != null
 
-    private fun String.isNotSubtypeOf(other: String) = !this.subtypeOf(other)
+    private fun Type.subtypeOf(other: Type) =
+        typeHierarchy.find(other)!!.findInSubtree(this) != null
+
+    private fun TypeSymbol.isNotSubtypeOf(other: TypeSymbol) = !this.referencedType.subtypeOf(other.referencedType)
 
     private val ExpressionContext.inferredType get() = typeInference.inferType(this)
 

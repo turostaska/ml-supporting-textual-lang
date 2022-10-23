@@ -35,7 +35,7 @@ class VariableSymbol(
 // todo: infix and property methods?
 open class MethodSymbol(
     override val name: String,
-    val returnType: String?, // todo: TypeSymbol
+    val returnType: TypeSymbol?,
     val params: Map<String, List<TypeSymbol>>,
     val isInfix: Boolean = false,
 ) : Symbol {
@@ -45,7 +45,7 @@ open class MethodSymbol(
     val returnTypeName = returnType ?: TypeNames.UNIT
 
     companion object {
-        fun fun0(name: String, returnType: String? = null) = MethodSymbol(name, returnType, emptyMap())
+        fun fun0(name: String, returnType: TypeSymbol? = null) = MethodSymbol(name, returnType, emptyMap())
     }
 
     override fun toString() = "fun $name: $type"
@@ -73,7 +73,7 @@ open class MethodSymbol(
 
 class ClassMethodSymbol(
     name: String,
-    returnType: String?,
+    returnType: TypeSymbol?,
     params: Map<String, List<TypeSymbol>>,
     val onType: TypeSymbol,
 ) : MethodSymbol(name, returnType, params) {

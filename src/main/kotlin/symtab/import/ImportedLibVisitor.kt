@@ -7,6 +7,7 @@ import python.functionName
 import python.parameterNamesToTypeNameMap
 import python.returnTypeName
 import symtab.*
+import type.ANY
 import type.TypeHierarchy
 import type.TypeNames
 import util.containsQualifier
@@ -119,14 +120,18 @@ class ImportedLibVisitor(
     override fun visitFuncdef(ctx: FuncdefContext): Unit = ctx.run {
         println("Function definition of $currentModuleName.$functionName")
 
-        if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false) return
+        if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false)
+            return
+
+        // todo: If return value is of unknown type, let's just replace it with Any for now
+        val returnType = currentScope.resolveType(returnTypeName) ?: currentScope.ANY
 
         // Some function headers may be identical since some types are not mapped yet and are substituted by 'Any?'.
         // If the type symbol can't be added, we should continue.
         try {
             currentScope += (currentScope as? ClassDeclarationScope)?.let {
-                ClassMethodSymbol(functionName, returnTypeName, params, it.typeSymbol)
-            } ?: MethodSymbol(functionName, returnTypeName, params)
+                ClassMethodSymbol(functionName, returnType, params, it.typeSymbol)
+            } ?: MethodSymbol(functionName, returnType, params)
         } catch (e: RuntimeException) {
             // todo: new exception for redefinition of function (or any symbol) and catch that
             println(e.message)
