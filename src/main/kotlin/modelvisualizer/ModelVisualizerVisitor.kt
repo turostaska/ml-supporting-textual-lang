@@ -94,7 +94,7 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
         }
     }
 
-    fun visitConstructor(ctx: FuncdefContext): Unit = ctx.run {
+    private fun visitConstructor(ctx: FuncdefContext): Unit = ctx.run {
         val memberDeclarations = this.suite()?.stmt()
             ?.filter { it.text.startsWith("self.") && it.isAssignation() }
             ?.map { it.simple_stmt().small_stmt(0).expr_stmt()!! }
@@ -131,7 +131,7 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
         }
     }
 
-    fun visitForwardFunction(ctx: FuncdefContext): Unit = ctx.run {
+    private fun visitForwardFunction(ctx: FuncdefContext): Unit = ctx.run {
         val inputTensor = parameterList().second()
 
         val forwardStatements = this.suite()?.stmt()
@@ -143,12 +143,6 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
         val forwardCalls = forwardStatements.flatMap {
             it.assignationRightAtomExpr()?.forwardCalls(inputTensor) ?: emptyList()
         }
-//            .map { functionName ->
-//            if (functionName == "relu")
-//                LayerType.ReLU
-//            else LayerType.values().find { it.name == functionName }
-//                ?: throw RuntimeException("Can't find symbol $functionName")
-//        }
 
         forwardCalls.forEachIndexed { index, functionName ->
             model += if (functionName == "relu") {
@@ -164,5 +158,7 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
             }
         }
     }
+
+    fun toGraphVizCode() = this.model.toGraphVizCode()
 
 }
