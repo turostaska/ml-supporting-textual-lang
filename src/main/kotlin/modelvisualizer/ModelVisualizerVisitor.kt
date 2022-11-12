@@ -1,6 +1,5 @@
 package modelvisualizer
 
-import com.kobra.Python3Parser
 import com.kobra.Python3Parser.*
 import com.kobra.Python3ParserBaseVisitor
 import util.second
@@ -11,7 +10,7 @@ private fun ClassdefContext.argList() = this.arglist()?.argument()?.toList()?.ma
 private fun FuncdefContext.parameterList() =
     this.parameters()?.typedargslist()?.tfpdef()?.map { it.NAME().text } ?: emptyList()
 
-private fun Python3Parser.StmtContext.isAssignation() =
+private fun StmtContext.isAssignation() =
     simple_stmt()?.small_stmt()?.firstOrNull()?.expr_stmt()?.ASSIGN()?.firstOrNull() != null
 
 fun Expr_stmtContext.assignationLeftAtomExpr() = testlist_star_expr()?.firstOrNull()
@@ -36,7 +35,6 @@ fun ArgumentContext.atomExpr() = this.test()?.firstOrNull()?.or_test()?.firstOrN
 
 fun Atom_exprContext.forwardCalls(
     inputTensor: String,
-    cumulativeCalls: List<String> = emptyList(),
 ): List<String> {
     val call = this.trailer().first().NAME().text
     val firstParam = this.trailer().second().arglist().argument().first()
@@ -48,21 +46,9 @@ fun Atom_exprContext.forwardCalls(
     return listOf(*previousCalls, call)
 }
 
-fun ArglistContext.forwardCalls(
-    inputTensor: String,
-    cumulativeCalls: List<String> = emptyList(),
-): List<String> {
-    if (this.argument()?.firstOrNull()?.atomExpr()?.trailer().isNullOrEmpty())
-        return listOf(this.argument().first().text)
-
-    val currentCall = this.argument(0).atomExpr()?.trailer()?.firstOrNull()?.NAME()?.text
-        ?: this.argument(0).atomExpr()?.atom()?.NAME()?.text!!
-    return listOf(*cumulativeCalls.toTypedArray(), currentCall)
-}
-
 class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
     private var inModelDefinition = false
-    private val layerSymbols: MutableMap<String, Layer> = mutableMapOf()
+    private val layerSymbols: MutableMap<String, ILayer> = mutableMapOf()
     private val model = Model()
 
     override fun visitClassdef(ctx: ClassdefContext): Unit = ctx.run {
@@ -105,13 +91,12 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
             type in LayerType.values().map(LayerType::name)
         }
 
-        for ((i, decl) in layerDeclarations.withIndex()) {
+        for (decl in layerDeclarations) {
             val name = decl.assignationLeftAtomExpr()?.trailer()?.lastOrNull()?.NAME()?.text!!
             val type = decl.assignationRightAtomExpr()?.trailer()
                 ?.findLast { it.arglist()?.argument().isNullOrEmpty() }?.NAME()?.text
                 ?.let {  typeName -> LayerType.values().find { it.name == typeName } }!!
 
-            // todo: MaxPool
             val inChannels = decl.parameters().let { params ->
                 if (type.isMaxPool()) -1
                 else if (params.first().ASSIGN() == null)
@@ -144,15 +129,11 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
             it.assignationRightAtomExpr()?.forwardCalls(inputTensor) ?: emptyList()
         }
 
-        forwardCalls.forEachIndexed { index, functionName ->
+        for (functionName in forwardCalls) {
             model += if (functionName == "relu") {
-                val numChannels = if (index == 0) 1 else forwardCalls[index - 1].let { previousCall ->
-                    layerSymbols[previousCall]!!.outChannels
-                }
-                Layer(LayerType.ReLU, numChannels, numChannels)
+                ReluLayer()
             } else if(layerSymbols[functionName]!!.type.isMaxPool()) {
-                val numChannels = model[index - 1].outChannels
-                Layer(layerSymbols[functionName]!!.type, numChannels, numChannels)
+                MaxPoolLayer(layerSymbols[functionName]!!.type)
             } else {
                 layerSymbols[functionName]!!
             }
