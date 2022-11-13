@@ -25,11 +25,11 @@ class Model(
        |rankdir=LR;
        |node [shape=record];
        ${clusterCode()}
-       |${clusters.firstOrNull()?.let { "start -> ${it.first().qualifier};" }}
+       |${clusters.firstOrNull()?.let { "start -> ${it.first().qualifier} [label=${it.first().inChannels}];" }}
        |${clusters.zipWithNext().joinToString(System.lineSeparator()) { (first, second) ->
-            "${first.last().qualifier} -> ${second.first().qualifier};"
+            "${first.last().qualifier} -> ${second.first().qualifier} [label=${first.last().outChannels}];"
         } }    
-       |${clusters.lastOrNull()?.let { "${it.last().qualifier} -> end;" }}
+       |${clusters.lastOrNull()?.let { "${it.last().qualifier} -> end [label=${it.last().outChannels}];" }}
        |}
     """.trimMargin()
 
