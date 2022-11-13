@@ -7,6 +7,8 @@ enum class LayerType {
     Linear,
     ReLU,
     Sequential,
+
+    Flatten,
 }
 
 fun LayerType.isMaxPool() = this.name.startsWith("MaxPool")

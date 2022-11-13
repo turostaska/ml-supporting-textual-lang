@@ -26,7 +26,10 @@ fun Expr_stmtContext.assignationRightAtomExpr() = testlist_star_expr()?.secondOr
     ?.arith_expr()?.firstOrNull()?.term()?.firstOrNull()?.factor()?.firstOrNull()?.power()?.atom_expr()
 
 fun Expr_stmtContext.parameters() =
-    this.assignationRightAtomExpr()?.trailer()?.lastOrNull()?.arglist()?.argument() ?: emptyList()
+    this.assignationRightAtomExpr()?.parameters() ?: emptyList()
+
+fun Atom_exprContext.parameters() =
+    this.trailer()?.lastOrNull()?.arglist()?.argument() ?: emptyList()
 
 fun ArgumentContext.atomExpr() = this.test()?.firstOrNull()?.or_test()?.firstOrNull()
     ?.and_test()?.firstOrNull()?.not_test()?.firstOrNull()?.comparison()?.expr()?.firstOrNull()
@@ -94,26 +97,56 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
         for (decl in layerDeclarations) {
             val name = decl.assignationLeftAtomExpr()?.trailer()?.lastOrNull()?.NAME()?.text!!
             val type = decl.assignationRightAtomExpr()?.trailer()
-                ?.findLast { it.arglist()?.argument().isNullOrEmpty() }?.NAME()?.text
+                ?.findLast { it.arglist()?.argument().isNullOrEmpty() && it.text != "()"  }?.NAME()?.text
                 ?.let {  typeName -> LayerType.values().find { it.name == typeName } }!!
 
-            val inChannels = decl.parameters().let { params ->
-                if (type.isMaxPool()) -1
-                else if (params.first().ASSIGN() == null)
-                    params.first().text.toInt()
-                else params.find { it.test()?.firstOrNull()?.text == "in_channels" }?.test(1)?.text?.toInt()!!
-            }
-            val outChannels = decl.parameters().let { params ->
-                when {
-                    type.isMaxPool() -> -1
-                    params.count() < 2 -> params.first().text.toInt()
-                    params.second().ASSIGN() == null -> params.second().text.toInt()
-                    else -> params.find { it.test()?.firstOrNull()?.text == "out_channels" }?.test(1)?.text?.toInt()!!
-                }
-            }
+            if (type != LayerType.Sequential) {
+                addLayerSymbol(name, type, decl.parameters())
+            } else {
+                val sequentialLayers = decl.assignationRightAtomExpr()!!.trailer().last().arglist().argument().mapIndexed { i, arg ->
+                        val layerName = "${name}_$i"
+                        val layerType = arg.atomExpr()?.trailer()?.findLast {
+                                it.arglist()?.argument().isNullOrEmpty() && it.text != "()"
+                            }?.NAME()?.text
+                            ?.let {  typeName -> LayerType.values().find { it.name == typeName } }!!
 
-            layerSymbols[name] = Layer(type, inChannels, outChannels)
+                        createLayer(layerType, arg.atomExpr()!!.parameters())
+                    }
+
+                layerSymbols[name] = SequentialLayer(sequentialLayers)
+            }
         }
+    }
+
+    private fun addLayerSymbol(
+        name: String,
+        type: LayerType,
+        parameters: List<ArgumentContext>,
+    ) {
+        layerSymbols[name] = createLayer(type, parameters)
+    }
+
+    private fun createLayer(
+        type: LayerType,
+        parameters: List<ArgumentContext>,
+    ): Layer {
+        val inChannels = parameters.let { params ->
+            when {
+                type.isMaxPool() || type in listOf(LayerType.ReLU, LayerType.Flatten) -> -1
+                params.first().ASSIGN() == null -> params.first().text.toInt()
+                else -> params.find { it.test()?.firstOrNull()?.text == "in_channels" }?.test(1)?.text?.toInt()!!
+            }
+        }
+        val outChannels = parameters.let { params ->
+            when {
+                type.isMaxPool() || type in listOf(LayerType.ReLU, LayerType.Flatten) -> -1
+                params.count() < 2 -> params.first().text.toInt()
+                params.second().ASSIGN() == null -> params.second().text.toInt()
+                else -> params.find { it.test()?.firstOrNull()?.text == "out_channels" }?.test(1)?.text?.toInt()!!
+            }
+        }
+
+        return Layer(type, inChannels, outChannels)
     }
 
     private fun visitForwardFunction(ctx: FuncdefContext): Unit = ctx.run {
@@ -122,6 +155,7 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
         val forwardStatements = this.suite()?.stmt()
             ?.filter { it.text.startsWith(inputTensor) && it.isAssignation() }
             ?.filter { "$inputTensor.view(" !in it.text } // todo: flatten
+            ?.filter { call -> layerSymbols.filter { it.value.type == LayerType.Flatten }.none { "${it.key}(" in call.text } }
             ?.map { it.simple_stmt().small_stmt(0).expr_stmt()!! }
             ?: emptyList()
 

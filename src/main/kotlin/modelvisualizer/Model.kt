@@ -13,6 +13,9 @@ class Model(
                 val numChannels = layers.lastOrNull()?.outChannels ?: 1
                 layers.add( Layer(element.type, numChannels, numChannels) )
             }
+            element is SequentialLayer -> {
+                layers.addAll(element.layers)
+            }
             else -> layers.add(element)
         }
     }
