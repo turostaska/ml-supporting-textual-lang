@@ -22,13 +22,44 @@ class Model(
 
     fun toGraphVizCode() = """
        |digraph G {
-       |${this@Model.firstOrNull()?.let { "start -> ${it.qualifier};" }}
-       |${this@Model.zipWithNext().joinToString(System.lineSeparator()) { (first, second) ->
-            "${first.qualifier} -> ${second.qualifier};"
+       |rankdir=LR;
+       |node [shape=record];
+       ${clusterCode()}
+       |${clusters.firstOrNull()?.let { "start -> ${it.first().qualifier};" }}
+       |${clusters.zipWithNext().joinToString(System.lineSeparator()) { (first, second) ->
+            "${first.last().qualifier} -> ${second.first().qualifier};"
         } }    
-       |${this@Model.lastOrNull()?.let { "${it.qualifier} -> end;" }}
+       |${clusters.lastOrNull()?.let { "${it.last().qualifier} -> end;" }}
        |}
     """.trimMargin()
+
+    private val clusters: List<List<ILayer>> get() {
+        // https://stackoverflow.com/questions/65248942/how-to-split-a-list-into-sublists-using-a-predicate-with-kotlin
+        return layers.flatMapIndexed { index, layer ->
+                when {
+                    index == 0 || index == layers.lastIndex -> listOf(index)
+                    layer.isClusterRoot() -> listOf(index - 1, index)
+                    else -> emptyList()
+                }
+            }
+            .windowed(size = 2, step = 2) { (from, to) -> layers.slice(from..to) }
+            .let {
+                if (it.lastOrNull()?.lastOrNull()?.isClusterRoot() == true) {
+                    it.dropLast(1) + listOf(it.last().dropLast(1), it.last().takeLast(1))
+                } else it
+            }
+    }
+
+    private fun ILayer.isClusterRoot() = this.type.isConv() || this.type == LayerType.Linear
+
+    private fun clusterCode(): String {
+        return clusters.mapIndexed { i, cluster -> """
+            |subgraph cluster_${i + 1} {
+            |    ${cluster.joinToString(" -> ") { it.qualifier }};
+            |    label="Layer ${i + 1}";
+            |}
+        """.trimIndent() }.joinToString(System.lineSeparator())
+    }
 
     private fun ILayer.getOrdinal(): Int = this@Model.filter { it.type == this.type }.indexOf(this)
 

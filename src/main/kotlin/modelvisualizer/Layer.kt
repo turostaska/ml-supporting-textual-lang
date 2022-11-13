@@ -12,6 +12,7 @@ enum class LayerType {
 }
 
 fun LayerType.isMaxPool() = this.name.startsWith("MaxPool")
+fun LayerType.isConv() = this.name.startsWith("Conv")
 
 interface ILayer {
     val type: LayerType
