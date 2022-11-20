@@ -175,5 +175,6 @@ class ModelVisualizerVisitor: Python3ParserBaseVisitor<Unit>() {
     }
 
     fun toGraphVizCode() = this.model.toGraphVizCode()
+    fun toConnectedGraphVizCode() = this.model.toConnectedGraphVizCode()
 
 }

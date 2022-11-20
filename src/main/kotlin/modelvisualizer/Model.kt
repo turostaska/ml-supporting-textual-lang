@@ -24,12 +24,36 @@ class Model(
        |digraph G {
        |rankdir=LR;
        |node [shape=record];
-       ${clusterCode()}
+       |${clusterCode()}
        |${clusters.firstOrNull()?.let { "start -> ${it.first().qualifier} [label=${it.first().inChannels}];" }}
        |${clusters.zipWithNext().joinToString(System.lineSeparator()) { (first, second) ->
             "${first.last().qualifier} -> ${second.first().qualifier} [label=${first.last().outChannels}];"
         } }    
        |${clusters.lastOrNull()?.let { "${it.last().qualifier} -> end [label=${it.last().outChannels}];" }}
+       |}
+    """.trimMargin()
+
+    fun toConnectedGraphVizCode() = """
+       |digraph G {
+       |node [shape=circle];
+       |edge [style=invis];
+       |splines=false;
+       |rankdir=LR;
+       |${connectedClusterCode()}
+       |
+       |edge[style=solid, tailport=e, headport=w];
+       |${clusters.firstOrNull()?.firstOrNull()?.outChannels?.let { numChannels ->
+            "start -> {${ (0 until numChannels).joinToString("; ") { "Node_0_$it" } } };"
+        }}
+       |
+       |${clusters.map { it.first().outChannels }.zipWithNext().mapIndexed { i, (first, second) ->
+            "{ ${ (0 until first).joinToString("; ") { "Node_${i}_$it" } }  } -> " +
+            "{ ${ (0 until second).joinToString("; ") { "Node_${i+1}_$it" } }  };"
+        }.joinToString(System.lineSeparator()) }
+       |
+       |${clusters.lastOrNull()?.firstOrNull()?.outChannels?.let { numChannels ->
+            "{${ (0 until numChannels).joinToString("; ") { "Node_${clusters.lastIndex}_$it" } } } -> end;"
+        } }
        |}
     """.trimMargin()
 
@@ -58,7 +82,19 @@ class Model(
             |    ${cluster.joinToString(" -> ") { it.qualifier }};
             |    label="Layer ${i + 1}";
             |}
-        """.trimIndent() }.joinToString(System.lineSeparator())
+        """.trimMargin() }.joinToString(System.lineSeparator())
+    }
+
+    private fun connectedClusterCode(): String {
+        return clusters.mapIndexed { i, cluster -> """
+            |{
+            |    ${cluster.firstOrNull()?.outChannels?.let {  numChannels ->
+                (0 until numChannels).joinToString("; ") { "Node_${i}_$it" } }};
+            |    label="Layer ${i + 1}: ${cluster.first().type}";
+            |}
+            |{ rank = same; ${cluster.firstOrNull()?.outChannels?.let { numChannels ->
+                (0 until numChannels).joinToString(" -> ") { "Node_${i}_$it" } }}; };
+        """.trimMargin() }.joinToString(System.lineSeparator())
     }
 
     private fun ILayer.getOrdinal(): Int = this@Model.filter { it.type == this.type }.indexOf(this)
