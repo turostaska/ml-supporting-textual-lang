@@ -41,19 +41,33 @@ class Model(
        |rankdir=LR;
        |${connectedClusterCode()}
        |
+       |li [shape=plaintext, label="Input layer"];
+       |li -> Input_0;
+       |{ rank=same; li; Input_0 };
+       |
+       |${List(clusters.size - 1) { i -> """
+               |l$i [shape=plaintext, label="Hidden layer $i"];
+               |l$i -> Node_${i}_0;
+               |{ rank=same; l$i; Node_${i}_0 };
+           """.trimMargin() }.joinToString(System.lineSeparator()) }
+       |
+       |lo [shape=plaintext, label="Output layer"];
+       |lo -> Output_0;
+       |{ rank=same; lo; Output_0 };
+       |
        |edge[style=solid, tailport=e, headport=w];
-       |${clusters.firstOrNull()?.firstOrNull()?.outChannels?.let { numChannels ->
-            "start -> {${ (0 until numChannels).joinToString("; ") { "Node_0_$it" } } };"
+       |
+       |${clusters.firstOrNull()?.firstOrNull()?.let { layer ->
+            "{ ${ (0 until layer.inChannels).joinToString("; ") { "Input_$it" } }  } -> " +
+            "{ ${ (0 until layer.outChannels).joinToString("; ") { "Node_0_$it" } }  };"
         }}
        |
        |${clusters.map { it.first().outChannels }.zipWithNext().mapIndexed { i, (first, second) ->
             "{ ${ (0 until first).joinToString("; ") { "Node_${i}_$it" } }  } -> " +
-            "{ ${ (0 until second).joinToString("; ") { "Node_${i+1}_$it" } }  };"
+            "{ ${ (0 until second).joinToString("; ") { 
+                if (i == clusters.lastIndex - 1) "Output_$it" else "Node_${i+1}_$it"
+            } }  };"
         }.joinToString(System.lineSeparator()) }
-       |
-       |${clusters.lastOrNull()?.firstOrNull()?.outChannels?.let { numChannels ->
-            "{${ (0 until numChannels).joinToString("; ") { "Node_${clusters.lastIndex}_$it" } } } -> end;"
-        } }
        |}
     """.trimMargin()
 
@@ -86,14 +100,27 @@ class Model(
     }
 
     private fun connectedClusterCode(): String {
-        return clusters.mapIndexed { i, cluster -> """
+        val input = """
+            |{ ${clusters.firstOrNull()?.firstOrNull()?.inChannels?.let { 
+                List(it) { i -> "Input_$i" }.joinToString("; ")    
+            }} }
+            |{ rank = same; ${clusters.firstOrNull()?.firstOrNull()?.inChannels?.let {
+                List(it) { i -> "Input_$i" }.joinToString(" -> ")
+            }} }
+            |
+        """.trimMargin()
+        return input + clusters.mapIndexed { i, cluster -> """
             |{
             |    ${cluster.firstOrNull()?.outChannels?.let {  numChannels ->
-                (0 until numChannels).joinToString("; ") { "Node_${i}_$it" } }};
+                (0 until numChannels).joinToString("; ") {
+                    if (i == clusters.lastIndex) "Output_$it" else "Node_${i}_$it"
+                } }};
             |    label="Layer ${i + 1}: ${cluster.first().type}";
             |}
             |{ rank = same; ${cluster.firstOrNull()?.outChannels?.let { numChannels ->
-                (0 until numChannels).joinToString(" -> ") { "Node_${i}_$it" } }}; };
+                (0 until numChannels).joinToString(" -> ") { 
+                    if (i == clusters.lastIndex) "Output_$it" else "Node_${i}_$it" 
+                } }}; };
         """.trimMargin() }.joinToString(System.lineSeparator())
     }
 
