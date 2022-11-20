@@ -102,7 +102,7 @@ class Model(
     private fun connectedClusterCode(): String {
         val input = """
             |{ ${clusters.firstOrNull()?.firstOrNull()?.inChannels?.let { 
-                List(it) { i -> "Input_$i" }.joinToString("; ")    
+                List(it) { i -> "Input_$i [label=<x<sub>$i</sub>>]" }.joinToString("; ")    
             }} }
             |{ rank = same; ${clusters.firstOrNull()?.firstOrNull()?.inChannels?.let {
                 List(it) { i -> "Input_$i" }.joinToString(" -> ")
@@ -113,7 +113,8 @@ class Model(
             |{
             |    ${cluster.firstOrNull()?.outChannels?.let {  numChannels ->
                 (0 until numChannels).joinToString("; ") {
-                    if (i == clusters.lastIndex) "Output_$it" else "Node_${i}_$it"
+                    if (i == clusters.lastIndex) "Output_$it [label=<y<sub>$it</sub>>]" 
+                    else "Node_${i}_$it [label=<a<sub>$it</sub><sup>($i)</sup>>]"
                 } }};
             |    label="Layer ${i + 1}: ${cluster.first().type}";
             |}
