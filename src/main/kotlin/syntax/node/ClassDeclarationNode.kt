@@ -48,10 +48,15 @@ class ClassDeclarationNode(
     // todo: constructor parameters
     private val constructorCode get() = takeIf(members.any()) { """
             |def __init__(self, $constructorParameters):
+            |    $superCall
             |    ${members.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
             |    
         """.trimMargin()
     }
+
+    private val superCall get() = if (superClasses.any()) { """
+        |super().__init__()
+    """.trimMargin() } else "pass"
 
     private val constructorParameters get() = """
         |${constructorParameterMembers.joinToString(separator = ", ") { it.name }}
