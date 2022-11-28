@@ -14,7 +14,8 @@ class Model(
                 layers.add( Layer(element.type, numChannels, numChannels) )
             }
             element is SequentialLayer -> {
-                layers.addAll(element.layers)
+                element.layers.forEach { this.add(it) }
+                true
             }
             else -> layers.add(element)
         }
@@ -90,14 +91,12 @@ class Model(
 
     private fun ILayer.isClusterRoot() = this.type.isConv() || this.type == LayerType.Linear
 
-    private fun clusterCode(): String {
-        return clusters.mapIndexed { i, cluster -> """
-            |subgraph cluster_${i + 1} {
-            |    ${cluster.joinToString(" -> ") { it.qualifier }};
-            |    label="Layer ${i + 1}";
-            |}
-        """.trimMargin() }.joinToString(System.lineSeparator())
-    }
+    private fun clusterCode() = clusters.mapIndexed { i, cluster -> """
+        |subgraph cluster_${i + 1} {
+        |    ${cluster.joinToString(" -> ") { it.qualifier }};
+        |    label="Layer ${i + 1}";
+        |}
+    """.trimMargin() }.joinToString(System.lineSeparator())
 
     private fun connectedClusterCode(): String {
         val input = """
