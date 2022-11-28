@@ -16,3 +16,12 @@ fun <T> Iterable<T>.joinToCodeWithTabToAllLinesButFirst(num: Int, transform: ((T
     this.joinToString(System.lineSeparator()) {
         transform(it).prependTab(num)
     }.removePrefix(TAB.repeat(num))
+
+fun String.splitOnFirst(delimiter: String): Pair<String, String> {
+    require(delimiter in this)
+
+    val before = this.substringBefore(delimiter)
+    val after = this.substringAfter(delimiter)
+
+    return before to after
+}

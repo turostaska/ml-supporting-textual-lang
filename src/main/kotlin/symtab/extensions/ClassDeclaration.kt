@@ -6,4 +6,4 @@ val kobraParser.ClassDeclarationContext.className get() = this.simpleIdentifier(
     ?: throw RuntimeException("Class name can't be null")
 
 val kobraParser.ClassDeclarationContext.superClasses get() =
-    this.delegationSpecifiers()?.delegationSpecifier()?.map { it.simpleIdentifier().text } ?: emptyList()
+    this.delegationSpecifiers()?.delegationSpecifier()?.map { it.identifier().text } ?: emptyList()

@@ -16,7 +16,7 @@ sealed interface Symbol {
 class ModuleSymbol(
     val moduleScope: ModuleScope,
 ) : Symbol {
-    override val name: String = moduleScope.moduleName
+    override val name: String = moduleScope.importAlias ?: moduleScope.moduleName
     override val type: String = "Module symbol of module '$name'"
 }
 

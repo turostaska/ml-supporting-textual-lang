@@ -1,6 +1,6 @@
 package util
 
-inline fun throwError(message: () -> String) {
+inline fun throwError(message: () -> String): Nothing {
     throw RuntimeException(message())
 }
 

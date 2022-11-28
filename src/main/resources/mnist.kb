@@ -1,0 +1,29 @@
+import torch.nn as nn
+// import torch.nn.functional as F
+// import torch.nn.Module as Module
+
+class Net: nn.Module {
+    val conv1 = nn::Conv2d(1, 32, 3, 1)
+    val conv2 = nn::Conv2d(32, 64, 3, 1)
+    val dropout1 = nn::Dropout(0.25)
+    val dropout2 = nn::Dropout(0.5)
+    val fc1 = nn::Linear(9216, 128)
+    val fc2 = nn::Linear(128, 10)
+
+    override fun forward(x: Any) {
+        var x = x
+        x = conv1(x)
+        x = F.relu(x)
+        x = conv2(x)
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = dropout1(x)
+        x = torch.flatten(x, 1)
+        x = fc1(x)
+        x = F.relu(x)
+        x = dropout2(x)
+        x = fc2(x)
+        val output = F.log_softmax(x, dim=1)
+        return output
+    }
+}

@@ -2,6 +2,8 @@ package symtab
 
 import symtab.Scope.Serial.serial
 import type.nullableVariant
+import util.splitOnFirst
+import util.throwError
 
 open class Scope(
     val parent: Scope? = null,
@@ -13,15 +15,24 @@ open class Scope(
         parent?.children?.add(this)
     }
 
-    fun resolveMethod(name: String): MethodSymbol? =
-        resolveMethodLocally(name) ?: this.parent?.resolveMethod(name)
+    fun resolveMethod(name: String): MethodSymbol? {
+        return resolveMethodLocally(name) ?: this.parent?.resolveMethod(name)
+    }
 
     fun resolveVariable(name: String): VariableSymbol? =
         resolveVariableLocally(name) ?: this.parent?.resolveVariable(name)
 
-    fun resolveType(name: String): TypeSymbol? =
-        symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
-            ?: this.parent?.resolveType(name)
+    fun resolveType(name: String): TypeSymbol? {
+        return if ("." !in name)
+            symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
+                ?: this.parent?.resolveType(name)
+        else {
+            val (module, name) = name.splitOnFirst(".")
+            val moduleSymbol = findModuleOrClassScope(module)
+                ?: throwError { "Can't resolve $name: module or class $module not found" }
+            moduleSymbol.resolveType(name)
+        }
+    }
 
     fun resolveBuiltInType(name: String): BuiltInTypeSymbol? =
         symbols.findLast { it.name == name && it is BuiltInTypeSymbol } as? BuiltInTypeSymbol
@@ -33,13 +44,23 @@ open class Scope(
     fun resolveVariableLocally(name: String): VariableSymbol? =
         symbols.findLast { it.name == name && it is VariableSymbol } as? VariableSymbol
 
-    fun resolve(name: String): Symbol? = symbols.findLast { it.name == name }
+    fun resolve(name: String): Symbol? {
+        return if ("." !in name)
+            symbols.findLast { it.name == name }
+                ?: parent?.resolve(name)
+        else {
+            val (module, name) = name.splitOnFirst(".")
+            val moduleSymbol = findModuleOrClassScope(module)
+                ?: throwError { "Can't resolve $name: module or class $module not found" }
+            moduleSymbol.resolve(name)
+        }
+    }
 
     fun findModuleOrClassScope(name: String): Scope? =
         children.findLast {
-            it is ModuleScope && it.moduleName == name ||
+            it is ModuleScope && it.importAlias == name ||
             it is ClassDeclarationScope && it.className == name
-        }
+        } ?: parent?.findModuleOrClassScope(name)
 
     fun findClassScope(name: String): ClassDeclarationScope? =
         children.findLast { it is ClassDeclarationScope && it.className == name } as? ClassDeclarationScope

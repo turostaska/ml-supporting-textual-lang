@@ -42,7 +42,7 @@ class ImportedLibVisitor(
         }
 
     init {
-        println("Visited module '$currentModuleName'")
+        // println("Visited module '$currentModuleName'")
 
         findNamesForModule(currentModuleName).associateWith { it }.let { namesToAliases ->
             this.symbolsToImportAs?.plusAssign(namesToAliases)
@@ -118,7 +118,13 @@ class ImportedLibVisitor(
     }
 
     override fun visitFuncdef(ctx: FuncdefContext): Unit = ctx.run {
-        println("Function definition of $currentModuleName.$functionName")
+        // println("Function definition of $currentModuleName.$functionName")
+        if (functionName == "__init__") {
+            (currentScope as? ClassDeclarationScope)?.typeSymbol?.runCatching {
+                currentScope.parent!!.add(MethodSymbol(this.name, this, params))
+            }
+            return
+        }
 
         if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false)
             return

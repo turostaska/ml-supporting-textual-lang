@@ -37,14 +37,24 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         currentScope.addType(typeSymbol)
 
         currentScope = ClassDeclarationScope(currentScope, typeSymbol)
-        super.visitClassDeclaration(ctx).also {
-            currentScope = currentScope.parent!!
-        }
+        super.visitClassDeclaration(ctx)
+        currentScope = currentScope.parent!!
     }
 
-    override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext) {
+    override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext): Unit = ctx.run {
         val typeSymbol = (currentScope as? ClassDeclarationScope)?.typeSymbol
             ?: throw RuntimeException("Primary constructor found, but not in a class declaration")
+
+        val params = classParameters().classParameter().associate {
+            val paramName = it.simpleIdentifier().text
+            val paramType = currentScope.resolveTypeOrThrow(it.type().simpleIdentifier().text)
+            paramName to listOf(paramType)
+        }
+
+        // add constructor to the parent scope
+        currentScope.parent!!.add(
+            MethodSymbol(typeSymbol.name, typeSymbol, params)
+        )
 
         currentScope = PrimaryConstructorScope(currentScope, typeSymbol)
         super.visitPrimaryConstructor(ctx).also {
@@ -132,7 +142,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     }
 
     override fun visitImportHeader(ctx: ImportHeaderContext): Unit = ctx.run {
-        val moduleName = identifier().simpleIdentifier().first().text
+        val moduleName = identifier().text
+        // val moduleName = identifier().text + MULT()?.let { ".*" }.orEmpty()
         val importAlias = importAlias()?.simpleIdentifier()?.Identifier()?.text ?: moduleName
 
         val moduleScope = ModuleScope(currentScope, moduleName, importAlias)

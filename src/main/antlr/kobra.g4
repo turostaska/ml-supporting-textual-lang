@@ -98,7 +98,7 @@ delegationSpecifiers
     ;
 
 delegationSpecifier
-    : simpleIdentifier constructorInvocation
+    : identifier constructorInvocation
     ;
 
 constructorInvocation
