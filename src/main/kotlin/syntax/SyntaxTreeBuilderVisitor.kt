@@ -28,7 +28,7 @@ class SyntaxTreeBuilderVisitor(
     }
 
     override fun visitImportHeader(ctx: kobraParser.ImportHeaderContext): Unit = ctx.run {
-        val moduleName = identifier().simpleIdentifier().first().Identifier().text
+        val moduleName = identifier().text
         val importAlias = identifier().simpleIdentifier()?.secondOrNull()?.Identifier()?.text
 
         ImportHeaderNode(moduleName, importAlias, currentNode)
