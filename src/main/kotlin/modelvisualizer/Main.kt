@@ -15,4 +15,5 @@ fun main() {
     val visitor = ModelVisualizerVisitor().also { it.visit(program) }
 
     println(visitor.toGraphVizCode())
+//    println(visitor.toConnectedGraphVizCode())
 }
