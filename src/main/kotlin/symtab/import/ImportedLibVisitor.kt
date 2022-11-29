@@ -7,6 +7,7 @@ import python.functionName
 import python.parameterNamesToTypeNameMap
 import python.returnTypeName
 import symtab.*
+import symtab.extensions.resolveMethodOrThrow
 import type.ANY
 import type.TypeHierarchy
 import type.TypeNames
@@ -110,6 +111,15 @@ class ImportedLibVisitor(
 
         try {
             currentScope.addType(typeSymbol)
+
+            // ha van őse, és nincs explicit konstruktora, le kell másolni az ős konstruktorát
+            if (!this.hasExplicitConstructor && this.hasSuperclass) {
+                val firstSuperclass = this.arglist().argument().first().text
+                val superclassConstructor = currentScope.resolveMethodOrThrow(firstSuperclass)
+                currentScope.add(
+                    MethodSymbol(className, typeSymbol, superclassConstructor.params)
+                )
+            }
         } catch (_: RuntimeException) {}
 
         currentScope = ClassDeclarationScope(currentScope, typeSymbol)
@@ -152,4 +162,14 @@ class ImportedLibVisitor(
             currentScope.resolveType(typeName) ?: symtabBuilder.globalScope.resolveType("Any?")!!
         }
     }
+
+    private val ClassdefContext.functions
+        get() = suite()?.stmt()?.filter { it.compound_stmt()?.funcdef() != null }
+            ?.map { it.compound_stmt().funcdef().NAME().text } ?: emptyList()
+
+    private val ClassdefContext.hasExplicitConstructor
+        get() = this.functions.any { it == "__init__" }
+
+    private val ClassdefContext.hasSuperclass
+        get() = this.arglist().argument().map { it.text }.any { it != "object" }
 }

@@ -8,6 +8,8 @@ val PrimaryExpressionContext.isString get() = (this.stringLiteral() != null)
 
 val PrimaryExpressionContext.isInt get() = (this.literalConstant()?.IntegerLiteral() != null)
 
+val PrimaryExpressionContext.isFloat get() = (this.literalConstant()?.FloatLiteral() != null)
+
 val PrimaryExpressionContext.isNullLiteral get() = (this.literalConstant()?.NullLiteral() != null)
 
 val PrimaryExpressionContext.isSimpleIdentifier get() = (this.simpleIdentifier() != null)

@@ -33,7 +33,7 @@ class ClassDeclarationNode(
 
     override fun appendCodeTo(sb: StringBuilder, indent: Int) {
         sb.append(this.toCode().prependTab(indent))
-        sb.appendLine(System.lineSeparator())
+        sb.appendLine()
     }
 
     private val emptyClassPassStatement get() = takeIf(isEmpty) { """

@@ -98,7 +98,7 @@ delegationSpecifiers
     ;
 
 delegationSpecifier
-    : identifier constructorInvocation
+    : identifier constructorInvocation?
     ;
 
 constructorInvocation
@@ -203,6 +203,7 @@ literalConstant
     : BooleanLiteral
     | IntegerLiteral
     | NullLiteral
+    | FloatLiteral
     ;
 
 stringLiteral
@@ -384,6 +385,10 @@ NullLiteral: 'null';
 IntegerLiteral
     : '1'..'9' ('0'..'9')*
     | '0'
+    ;
+
+FloatLiteral
+    : '0'..'9' DOT ('0'..'9')*
     ;
 
 StringLiteral

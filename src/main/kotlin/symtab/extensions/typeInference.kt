@@ -17,6 +17,7 @@ class TypeInference(
     private val UNIT get() = globalScope.resolveTypeOrThrow(TypeNames.UNIT)
     private val RANGE get() = globalScope.resolveTypeOrThrow(TypeNames.RANGE)
     private val INT get() = globalScope.resolveTypeOrThrow(TypeNames.INT)
+    private val FLOAT get() = globalScope.resolveTypeOrThrow(TypeNames.FLOAT)
     private val STRING get() = globalScope.resolveTypeOrThrow(TypeNames.STRING)
     private val NOTHING_N get() = globalScope.resolveTypeOrThrow(TypeNames.NOTHING_N)
     private val NOTHING get() = globalScope.resolveTypeOrThrow(TypeNames.NOTHING)
@@ -152,6 +153,7 @@ class TypeInference(
             isBoolean -> BOOLEAN
             isInt -> INT
             isString -> STRING
+            isFloat -> FLOAT
             isNullLiteral -> NOTHING_N
             isSimpleIdentifier -> {
                 currentScope.resolveVariable(simpleIdentifier().text)?.typeSymbol
