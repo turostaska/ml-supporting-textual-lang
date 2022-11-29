@@ -497,6 +497,6 @@ simpleIdentifier
     ;
 
 Identifier
-    : Letter (Letter | [0-9])*
+    : Letter (Letter | [0-9] | '_')*
     | '`' ~([\r\n] | '`')+ '`'
     ;

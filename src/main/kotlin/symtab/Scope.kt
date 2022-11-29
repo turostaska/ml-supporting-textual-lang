@@ -29,7 +29,8 @@ open class Scope(
         else {
             val (module, name) = name.splitOnFirst(".")
             val moduleSymbol = findModuleOrClassScope(module)
-                ?: throwError { "Can't resolve $name: module or class $module not found" }
+                // ?: throwError { "Can't resolve $name: module or class $module not found" }
+                ?: return null
             moduleSymbol.resolveType(name)
         }
     }

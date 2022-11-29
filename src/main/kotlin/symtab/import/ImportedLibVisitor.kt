@@ -17,6 +17,10 @@ import util.secondOrNull
 // végtelen ciklusra odafigyelni: listát fenntartani
 // működjön nem rekurzívan, utána lehet szórakozni
 
+private val SPECIAL_IMPORT_AS = mapOf(
+    "max_pool2d_with_indices" to "max_pool2d",
+)
+
 /*
  * from a import B, C   : add B and C to the global scope
  * from a import *      : add everything from 'a' to global scope
@@ -136,9 +140,13 @@ class ImportedLibVisitor(
             return
         }
 
-        if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false
-            && currentScope !is ClassDeclarationScope)
+        if ((symbolsToImportAs.isNotEmpty() && !symbolsToImportAs.keys.contains("$currentModuleName.$functionName"))
+            && currentScope !is ClassDeclarationScope
+            && functionName !in SPECIAL_IMPORT_AS.keys)
             return
+
+        val functionName = if (functionName in SPECIAL_IMPORT_AS.keys) SPECIAL_IMPORT_AS[functionName]!!
+            else functionName
 
         // todo: If return value is of unknown type, let's just replace it with Any for now
         val returnType = currentScope.resolveType(returnTypeName) ?: currentScope.ANY
@@ -151,7 +159,7 @@ class ImportedLibVisitor(
             } ?: MethodSymbol(functionName, returnType, params)
         } catch (e: RuntimeException) {
             // todo: new exception for redefinition of function (or any symbol) and catch that
-            println(e.message)
+//            println(e.message)
         }
 
         super.visitFuncdef(ctx)
