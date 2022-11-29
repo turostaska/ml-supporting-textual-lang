@@ -9,7 +9,7 @@ open class Scope(
     val parent: Scope? = null,
     val children: MutableList<Scope> = mutableListOf(),
     val name: String = if (parent == null) "Global scope" else "Scope ${serial++}",
-    private val symbols: MutableSet<Symbol> = mutableSetOf(),
+    protected val symbols: MutableSet<Symbol> = mutableSetOf(),
 ) {
     init {
         parent?.children?.add(this)
@@ -157,7 +157,12 @@ class ClassDeclarationScope(
     val typeSymbol: TypeSymbol,
     name: String = "Class declaration of ${typeSymbol.name}",
 ): Scope(parent, name = name) {
+    init {
+        typeSymbol.scope = this
+    }
+
     val className = typeSymbol.name
+    val classMethods: Set<MethodSymbol> get() = symbols.filterIsInstance<MethodSymbol>().toSet()
 }
 
 class PrimaryConstructorScope(

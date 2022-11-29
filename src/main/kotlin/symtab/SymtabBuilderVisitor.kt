@@ -94,6 +94,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             throw RuntimeException("Invalid value: $typeSymbol should be given but ${expression().inferredType} found")
 
         currentScope += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
+
+        // if type symbol has forward function defined, a method should be added to the scope as well
+        typeSymbol.forwardFunction()?.let { forwardFunction ->
+            currentScope += MethodSymbol(name, forwardFunction.returnType, forwardFunction.params)
+        }
+
         super.visitPropertyDeclaration(this)
     }
 
@@ -156,6 +162,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitImportHeader(this)
     }
 
+
+    // a ClassDeclarationScope-jában van-e ClassMethodSymbol, aminek a neve forward
+    private fun TypeSymbol.forwardFunction(): MethodSymbol? {
+        return if (this.scope == null) return null
+        else this.classMethods.find { it.name == "forward" }
+    }
 
     private fun Type.subtypeOf(other: Type) =
         typeHierarchy.find(other)!!.findInSubtree(this) != null

@@ -1,6 +1,5 @@
 import torch.nn as nn
-// import torch.nn.functional as F
-// import torch.nn.Module as Module
+import torch.nn.functional as F
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -10,20 +9,20 @@ class Net: nn.Module {
     val fc1 = nn::Linear(9216, 128)
     val fc2 = nn::Linear(128, 10)
 
-    override fun forward(x: Any) {
-        var x = x
+    /* override */ fun forward(input: Any) {
+        var x = input
         x = conv1(x)
-        x = F.relu(x)
+        x = F::relu(x)
         x = conv2(x)
-        x = F.relu(x)
-        x = F.max_pool2d(x, 2)
+        x = F::relu(x)
+        x = F::max_pool2d(x, 2)
         x = dropout1(x)
         x = torch.flatten(x, 1)
         x = fc1(x)
-        x = F.relu(x)
+        x = F::relu(x)
         x = dropout2(x)
         x = fc2(x)
-        val output = F.log_softmax(x, dim=1)
+        val output = F::log_softmax(x, dim=1)
         return output
     }
 }

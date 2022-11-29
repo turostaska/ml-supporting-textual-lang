@@ -140,6 +140,11 @@ class TypeInference(
                     // todo: nem veszi figyelembe a paramétereket
                     // todo: csak akkor jó, ha az utolsó suffix, ha nem, akkor a visszatérési típus scope-ja kell
                     return currentScope.resolveMethodOrThrow(receiver.name).returnType ?: UNIT
+//                    return currentScope.resolveMethod(receiver.name)?.returnType
+//                        ?: currentScope.resolveVariable(receiver.name)?.typeSymbol?.let {
+//                            currentScope.findModuleOrClassScope(it.name)?.resolveMethod("forward")?.returnType
+//                        }
+//                        ?: UNIT
                 }
                 else -> TODO()
             }

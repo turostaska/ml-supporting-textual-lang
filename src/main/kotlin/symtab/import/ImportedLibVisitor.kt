@@ -136,7 +136,8 @@ class ImportedLibVisitor(
             return
         }
 
-        if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false)
+        if (symbolsToImportAs?.keys?.contains("$currentModuleName.$functionName") == false
+            && currentScope !is ClassDeclarationScope)
             return
 
         // todo: If return value is of unknown type, let's just replace it with Any for now

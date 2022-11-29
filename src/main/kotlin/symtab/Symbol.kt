@@ -77,10 +77,6 @@ class ClassMethodSymbol(
     params: Map<String, List<TypeSymbol>>,
     val onType: TypeSymbol,
 ) : MethodSymbol(name, returnType, params) {
-    init {
-        onType.classMethods += this
-    }
-
     override val type: String
         get() = "$onType.(${
             params.map { "${it.key}: ${it.value.first().name}" }.joinToString()
@@ -108,12 +104,17 @@ class ClassMethodSymbol(
 open class TypeSymbol(
     override val name: String,
     val referencedType: Type,
+    var scope: ClassDeclarationScope? = null,
 ) : Symbol {
-    val classMethods: MutableSet<MethodSymbol> = mutableSetOf()
+    val classMethods: Set<MethodSymbol> get() {
+        return scope!!.classMethods
+    }
 
     override val type: String = "{ Type: ${referencedType.name} }"
 
     override fun toString() = "class $name (user-defined)"
+
+    constructor(name: String, referencedType: Type): this(name, referencedType, null)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -140,7 +141,7 @@ fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) TypeNames.pythonTyp
 class BuiltInTypeSymbol(
     name: String,
     referencedType: Type,
-) : TypeSymbol(name, referencedType) {
+) : TypeSymbol(name, referencedType, null) {
     override val type: String = "{ Built-in Type: ${referencedType.name} }"
 
     override fun toString() = "class $name (built-in)"
