@@ -4,6 +4,7 @@ import com.kobra.kobraParser
 import symtab.*
 import type.TypeNames
 import util.second
+import util.secondOrNull
 import util.throwError
 
 class TypeInference(
@@ -28,24 +29,28 @@ class TypeInference(
     private val kobraParser.ExpressionContext.inferredType: TypeSymbol get() = this.disjunction().inferredType
 
     private val kobraParser.DisjunctionContext.inferredType: TypeSymbol
-        get() = if (this.DISJ().any())
+        get() = if (this.DISJ().any()) {
+            require(this.conjunction().first().inferredType == BOOLEAN && this.conjunction().second().inferredType == BOOLEAN)
             BOOLEAN
-        else this.conjunction().first().inferredType
+        } else this.conjunction().first().inferredType
 
     private val kobraParser.ConjunctionContext.inferredType: TypeSymbol
-        get() = if (this.CONJ().any())
+        get() = if (this.CONJ().any()) {
+            require(this.equality().first().inferredType == BOOLEAN && this.equality().second().inferredType == BOOLEAN)
             BOOLEAN
-        else this.equality().first().inferredType
+        } else this.equality().first().inferredType
 
     private val kobraParser.EqualityContext.inferredType: TypeSymbol
-        get() = if (this.equalityOperator().any())
+        get() = if (this.equalityOperator().any()) {
+            require(this.comparison().first().inferredType == BOOLEAN && this.comparison().second().inferredType == BOOLEAN)
             BOOLEAN
-        else this.comparison().first().inferredType
+        } else this.comparison().first().inferredType
 
     private val kobraParser.ComparisonContext.inferredType: TypeSymbol
-        get() = if (this.comparisonOperator().any())
+        get() = if (this.comparisonOperator().any()) {
+            require(this.genericCallLikeComparison().first().inferredType == this.genericCallLikeComparison().second().inferredType)
             BOOLEAN
-        else this.genericCallLikeComparison().first().inferredType
+        } else this.genericCallLikeComparison().first().inferredType
 
     private val kobraParser.GenericCallLikeComparisonContext.inferredType: TypeSymbol
         get() = this.infixOperation().inferredType
@@ -90,9 +95,22 @@ class TypeInference(
             RANGE
         else this.additiveExpression().first().inferredType
 
+    private val NUMERIC_TYPES = listOf(INT, FLOAT)
+
     // TODO: get return type of method with overloaded operator '+'
     private val kobraParser.AdditiveExpressionContext.inferredType: TypeSymbol
-        get() = this.multiplicativeExpression().first().inferredType
+        get() {
+            val op1 = this.multiplicativeExpression().first()
+            val op2 = this.multiplicativeExpression().secondOrNull() ?:
+                return op1.inferredType
+
+            return when {
+                op1.inferredType == op2.inferredType -> op1.inferredType
+                op1.inferredType in NUMERIC_TYPES && op2.inferredType in NUMERIC_TYPES -> FLOAT
+                else -> op1.inferredType.classMethods.find { it.name == "__add__" }?.returnType ?:
+                    throwError { "Additive operator does not work on '${op1.text}' and '${op2.text}'" }
+            }
+        }
 
     private val kobraParser.MultiplicativeExpressionContext.inferredType: TypeSymbol
         get() = this.asExpression().first().inferredType

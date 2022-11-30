@@ -8,7 +8,7 @@ object BuiltInTypes {
         addParent(anyN)
     }
 
-    val nothingN = Type(TypeNames.NOTHING, true).apply {
+    val nothingN = Type(TypeNames.NOTHING, true, pythonName = TypeNames.UNIT_PY).apply {
         addParent(anyN)
     }
     val nothing = Type(TypeNames.NOTHING, false).apply {

@@ -2,7 +2,6 @@ package symtab
 
 import type.Type
 import type.TypeNames
-import util.getKey
 
 val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
 
@@ -136,7 +135,7 @@ open class TypeSymbol(
 }
 
 // todo: reverse map as property
-fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) TypeNames.pythonTypeNamesToKobraMap.getKey(name) else name
+fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) this.referencedType.pythonName else name
 
 class BuiltInTypeSymbol(
     name: String,

@@ -9,3 +9,4 @@ class ImportHeaderNode(
 ): SyntaxTreeNode(_parent = parent) {
     override fun toCode() = "import $moduleName" + importAlias?.let { " as $it" }.orEmpty()
 }
+// todo: code generation a member függvényre
