@@ -14,5 +14,5 @@ open class PropertyDeclarationNode(
     protected val pythonTypeName = this.symbol.typeSymbol.pythonName()
 
     protected val isMutable = this.symbol.isMutable
-    val name = this.symbol.name
+    val name = this.symbol.pythonSymbolName!!
 }

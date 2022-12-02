@@ -2,8 +2,6 @@ package syntax.node
 
 import symtab.MethodSymbol
 import syntax.SyntaxTreeNode
-import type.TypeNames
-import util.getKey
 import util.joinToCodeWithTabToAllLinesButFirst
 import util.prependTab
 
@@ -14,7 +12,7 @@ class FunctionDeclarationNode(
     private val functionName = methodSymbol.name
     private val returnTypeName = methodSymbol.returnTypeName
     // todo: MethodSymbol's return type should be a TypeSymbol
-    private val returnTypeNamePy = TypeNames.pythonTypeNamesToKobraMap.getKey(returnTypeName)
+    private val returnTypeNamePy = methodSymbol.returnType?.referencedType?.pythonName ?: returnTypeName
     private val params = methodSymbol.params
 
     override fun toCode() = """

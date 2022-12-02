@@ -370,12 +370,6 @@ type
     : simpleIdentifier QUEST?
     ;
 
-// SECTION: characters
-
-fragment Letter
-    : [a-zA-Z]
-    ;
-
 // SECTION: literals
 
 BooleanLiteral: 'true'| 'false';
@@ -499,4 +493,10 @@ simpleIdentifier
 Identifier
     : Letter (Letter | [0-9] | '_')*
     | '`' ~([\r\n] | '`')+ '`'
+    ;
+
+// SECTION: characters
+
+fragment Letter
+    : [a-zA-Z]
     ;

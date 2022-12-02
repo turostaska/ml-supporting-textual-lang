@@ -95,7 +95,7 @@ class TypeInference(
             RANGE
         else this.additiveExpression().first().inferredType
 
-    private val NUMERIC_TYPES = listOf(INT, FLOAT)
+    private val NUMERIC_TYPES get() = listOf(INT, FLOAT)
 
     // TODO: get return type of method with overloaded operator '+'
     private val kobraParser.AdditiveExpressionContext.inferredType: TypeSymbol

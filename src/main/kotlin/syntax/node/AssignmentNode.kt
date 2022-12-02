@@ -8,5 +8,5 @@ class AssignmentNode(
     private val value: String,
     parent: SyntaxTreeNode,
 ) : SyntaxTreeNode(_parent = parent) {
-    override fun toCode() = "${symbol.name} = $value"
+    override fun toCode() = "${symbol.pythonSymbolName} = $value"
 }

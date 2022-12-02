@@ -2,19 +2,35 @@ package symtab
 
 import type.Type
 import type.TypeNames
+import util.throwError
+import java.util.*
 
 val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
 
 fun String.getAsMutability() = Mutability.valueOf(this.uppercase())
 
-sealed interface Symbol {
-    val name: String
-    val type: String
+sealed class Symbol {
+    abstract val name: String
+    abstract val type: String
+
+    var pythonSymbolName: String? = null
+        get() {
+            if (field == null) {
+                field = if (this.name.startsWith("`")) {
+                    val uuid = UUID.nameUUIDFromBytes(this.name.toByteArray())
+                        .toString()
+                        .replace('-', '_')
+                    "_symbol_$uuid"
+                } else this.name
+            }
+            return field
+        }
+        set(value) = throwError { "Symbol name can't be set." }
 }
 
 class ModuleSymbol(
     val moduleScope: ModuleScope,
-) : Symbol {
+) : Symbol() {
     override val name: String = moduleScope.importAlias ?: moduleScope.moduleName
     override val type: String = "Module symbol of module '$name'"
 }
@@ -25,7 +41,7 @@ class VariableSymbol(
     val typeSymbol: TypeSymbol,
     val mutability: Mutability,
     override val type: String = typeSymbol.name,
-) : Symbol {
+) : Symbol() {
 
     val isMutable = (mutability == Mutability.VAR)
     override fun toString() = "${mutability.name} $name: $type"
@@ -37,7 +53,7 @@ open class MethodSymbol(
     val returnType: TypeSymbol?,
     val params: Map<String, List<TypeSymbol>>,
     val isInfix: Boolean = false,
-) : Symbol {
+) : Symbol() {
     override val type: String
         get() = "(${params.map { "${it.key}: ${it.value.joinToString { type -> type.name }}" }.joinToString()}) -> $returnTypeName"
 
@@ -104,7 +120,7 @@ open class TypeSymbol(
     override val name: String,
     val referencedType: Type,
     var scope: ClassDeclarationScope? = null,
-) : Symbol {
+) : Symbol() {
     val classMethods: Set<MethodSymbol> get() {
         return scope!!.classMethods
     }

@@ -52,8 +52,6 @@ class SyntaxTreeBuilderVisitor(
         val value = expression().toPythonCode()
 
         AssignmentNode(symbol, value, currentNode)
-
-        super.visitAssignment(this)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {
