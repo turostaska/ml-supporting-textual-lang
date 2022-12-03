@@ -19,3 +19,5 @@ val PrimaryExpressionContext.isParenthesized get() = (this.parenthesizedExpressi
 val PrimaryExpressionContext.isCollection get() = (this.collectionLiteral() != null)
 
 val PrimaryExpressionContext.isReturnStatement get() = (this.jumpExpression()?.RETURN() != null)
+
+val PrimaryExpressionContext.isIfExpression get() = (this.ifExpression()?.IF() != null)

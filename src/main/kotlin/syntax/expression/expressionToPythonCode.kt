@@ -2,6 +2,7 @@ package syntax.expression
 
 import com.kobra.kobraParser.*
 import symtab.extensions.*
+import util.joinToCodeWithTabToAllLinesButFirst
 import util.second
 
 fun ExpressionContext.toPythonCode(): String = this.disjunction().toPythonCode()
@@ -153,6 +154,37 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
         isReturnStatement -> "return ${this.jumpExpression().expression().toPythonCode()}"
+        isIfExpression -> this.ifExpression().toPythonCode()
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
+    }
+}
+
+private fun IfExpressionContext.toPythonCode(): String {
+    val conditionCode = condition.toPythonCode()
+    return if (this.isOneLiner()) {
+        val ifBranchCode = ifBranch.statement().expression().toPythonCode()
+        val elseBranchCode = elseBranch.statement().expression().toPythonCode()
+
+        "$ifBranchCode if ($conditionCode) else $elseBranchCode"
+    } else {
+        val ifBranchCode = ifBranch.block()?.statements()?.statement()?.map {
+            it.expression()?.toPythonCode() ?: "TODO"
+        } ?: ifBranch.statement().let { it.expression()?.toPythonCode() ?: "TODO" }.let(::listOf)
+        val elseBranchCode = elseBranch.block()?.statements()?.statement()?.map {
+            it.expression()?.toPythonCode() ?: "TODO"
+        } ?: elseBranch.statement().let { it.expression()?.toPythonCode() ?: "TODO" }.let(::listOf)
+        """
+            |def __if():
+            |    if $conditionCode:
+            |        ${ifBranchCode.mapIndexed { i, it -> 
+                            if (i == ifBranchCode.lastIndex && !it.startsWith("return "))
+                                "return $it" else it
+                    }.joinToCodeWithTabToAllLinesButFirst(2) { it } }
+            |    else:
+            |        ${elseBranchCode.mapIndexed { i, it ->
+                            if (i == elseBranchCode.lastIndex && !it.startsWith("return "))
+                                "return $it" else it
+                        }.joinToCodeWithTabToAllLinesButFirst(2) { it } }
+        """.trimMargin()
     }
 }

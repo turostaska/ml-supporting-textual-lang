@@ -49,9 +49,8 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitAssignment(ctx: kobraParser.AssignmentContext): Unit = ctx.run {
         val symbol = currentScope.resolveVariable(ctx.identifier().text)!!
-        val value = expression().toPythonCode()
 
-        AssignmentNode(symbol, value, currentNode)
+        AssignmentNode(symbol, expression(), currentNode)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {

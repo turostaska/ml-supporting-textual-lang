@@ -2,6 +2,9 @@ package symtab.extensions
 
 import com.kobra.kobraParser
 import symtab.*
+import syntax.expression.condition
+import syntax.expression.elseBranch
+import syntax.expression.ifBranch
 import type.TypeNames
 import util.second
 import util.secondOrNull
@@ -185,8 +188,21 @@ class TypeInference(
             isParenthesized -> this.parenthesizedExpression().expression().inferredType
             isCollection -> LIST
             isReturnStatement -> NOTHING
+            isIfExpression -> this.ifExpression()!!.inferredType
             else -> throw RuntimeException("Can't infer type for expression '${this.text}'")
         }
+
+    private val kobraParser.IfExpressionContext.inferredType: TypeSymbol get() {
+        val ifReturnType = ifBranch.block()?.statements()?.statement()?.last()?.expression()?.inferredType
+            ?: ifBranch.statement().expression().inferredType
+        val elseReturnType = elseBranch.block()?.statements()?.statement()?.last()?.expression()?.inferredType
+            ?: elseBranch.statement().expression().inferredType
+
+        require(condition.inferredType == BOOLEAN) { "The condition in an if expression must be Boolean" }
+        require(ifReturnType == elseReturnType) { "Both branches must return with the same type" }
+
+        return ifReturnType
+    }
 }
 
 private fun String.nonNullable() = this.removeSuffix("?")
