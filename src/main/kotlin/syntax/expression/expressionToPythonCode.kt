@@ -2,7 +2,6 @@ package syntax.expression
 
 import com.kobra.kobraParser.*
 import symtab.extensions.*
-import util.joinToCodeWithTabToAllLinesButFirst
 import util.second
 
 fun ExpressionContext.toPythonCode(): String = this.disjunction().toPythonCode()
@@ -168,23 +167,17 @@ private fun IfExpressionContext.toPythonCode(): String {
         "$ifBranchCode if ($conditionCode) else $elseBranchCode"
     } else {
         val ifBranchCode = ifBranch.block()?.statements()?.statement()?.map {
-            it.expression()?.toPythonCode() ?: "TODO"
-        } ?: ifBranch.statement().let { it.expression()?.toPythonCode() ?: "TODO" }.let(::listOf)
+            it.expression().toPythonCode()
+        } ?: ifBranch.statement().expression().toPythonCode().let(::listOf)
         val elseBranchCode = elseBranch.block()?.statements()?.statement()?.map {
-            it.expression()?.toPythonCode() ?: "TODO"
-        } ?: elseBranch.statement().let { it.expression()?.toPythonCode() ?: "TODO" }.let(::listOf)
-        """
-            |def __if():
-            |    if $conditionCode:
-            |        ${ifBranchCode.mapIndexed { i, it -> 
-                            if (i == ifBranchCode.lastIndex && !it.startsWith("return "))
-                                "return $it" else it
-                    }.joinToCodeWithTabToAllLinesButFirst(2) { it } }
-            |    else:
-            |        ${elseBranchCode.mapIndexed { i, it ->
-                            if (i == elseBranchCode.lastIndex && !it.startsWith("return "))
-                                "return $it" else it
-                        }.joinToCodeWithTabToAllLinesButFirst(2) { it } }
-        """.trimMargin()
+            it.expression().toPythonCode()
+        } ?: elseBranch.statement().expression().toPythonCode().let(::listOf)
+
+        "(${ifBranchCode.toTernaries()}) if ($conditionCode) else ${elseBranchCode.toTernaries()}"
     }
+}
+
+fun List<String>.toTernaries(): String {
+    return if (this.size > 1) "(${this.drop(1).toTernaries()}) if (${this.first()} or True) else None"
+    else this.first()
 }
