@@ -133,7 +133,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             "Last statement must be return OR return type must be Unit"
         }
 
-        if (this.functionModifiers().functionModifier().any { it.OVERRIDE() != null }) {
+        if (this.functionModifiers()?.functionModifier()?.any { it.OVERRIDE() != null } == true) {
             (currentScope as? ClassDeclarationScope)
                 ?: throwError { "Override modifier on a method that doesn't belong to a class" }
             require(currentScope.resolveType(functionName) != null
