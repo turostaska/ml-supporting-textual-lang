@@ -158,6 +158,13 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
     }
 }
 
+private fun StatementContext.toPythonCode(): String {
+    return when {
+        this.expression() != null -> this.expression().toPythonCode()
+        else -> TODO()
+    }
+}
+
 private fun IfExpressionContext.toPythonCode(): String {
     val conditionCode = condition.toPythonCode()
     return if (this.isOneLiner()) {

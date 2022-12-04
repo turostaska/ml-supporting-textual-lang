@@ -22,6 +22,9 @@ class ClassDeclarationNode(
     private val constructorParameters = ctx.primaryConstructor()?.classParameters()?.classParameter()?.map {
         it.simpleIdentifier().text
     } ?: emptyList()
+
+    private val classMethodNodes get() = this._children.filterIsInstance<FunctionDeclarationNode>()
+
     private val classMemberDeclarations: List<Pair<String, String?>> =
         ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.filter {
             it.declaration()?.propertyDeclaration() != null
@@ -31,6 +34,18 @@ class ClassDeclarationNode(
 
             name to rhs
         } ?: emptyList()
+//
+//    private val classFunctionDeclarationNodes =
+//        ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.filter {
+//            it.declaration()?.functionDeclaration() != null
+//        }?.map {
+//            val functionName = it.declaration().functionDeclaration().simpleIdentifier().text
+//
+//            """
+//                |def $functionName:
+//                |
+//            """.trimMargin()
+//        }
 
     // todo: check member functions
     private val isEmpty get() = members.isEmpty() && superClasses.isEmpty()
@@ -42,6 +57,7 @@ class ClassDeclarationNode(
             |    $emptyClassPassStatement
             |    ${constructorCode.prependTabToAllLinesButFirst(1)}
             |    ${propertyDeclarationCode.prependTabToAllLinesButFirst(1)}
+            |    $classMethodsCode
         """.trimMargin()
     }
 
@@ -60,6 +76,8 @@ class ClassDeclarationNode(
             "_$lhs = $rhs"
         } ?: "_$lhs"
     }
+
+    private val classMethodsCode get() = this.classMethodNodes.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() }
 
     private val superClassesCode get() = takeIf(superClasses.any()) {
         superClasses.joinToString(prefix = "(", postfix = ")")
