@@ -22,6 +22,15 @@ class ClassDeclarationNode(
     private val constructorParameters = ctx.primaryConstructor()?.classParameters()?.classParameter()?.map {
         it.simpleIdentifier().text
     } ?: emptyList()
+    private val classMemberDeclarations: List<Pair<String, String?>> =
+        ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.filter {
+            it.declaration()?.propertyDeclaration() != null
+        }?.map {
+            val name = it.declaration().propertyDeclaration().simpleIdentifier().text
+            val rhs = it.declaration().propertyDeclaration()?.expression()?.toPythonCode()
+
+            name to rhs
+        } ?: emptyList()
 
     // todo: check member functions
     private val isEmpty get() = members.isEmpty() && superClasses.isEmpty()
@@ -46,6 +55,12 @@ class ClassDeclarationNode(
     """.trimMargin()
     }
 
+    private val classMemberDeclarationsCode get() = classMemberDeclarations.joinToCodeWithTabToAllLinesButFirst(1) {
+        (lhs, rhs) -> rhs?.let {
+            "_$lhs = $rhs"
+        } ?: "_$lhs"
+    }
+
     private val superClassesCode get() = takeIf(superClasses.any()) {
         superClasses.joinToString(prefix = "(", postfix = ")")
     }
@@ -55,6 +70,7 @@ class ClassDeclarationNode(
             |def __init__(self, $constructorParametersCode):
             |    $superCall
             |    ${constructorParameterMembers.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
+            |    $classMemberDeclarationsCode
             |    $initCalls
             |    
         """.trimMargin()
