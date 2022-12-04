@@ -104,6 +104,14 @@ class SyntaxTreeBuilderVisitor(
     override fun visitExpression(ctx: kobraParser.ExpressionContext): Unit = ctx.run {
         ExpressionNode(currentNode, this)
     }
+
+    override fun visitInitBlock(ctx: kobraParser.InitBlockContext): Unit = ctx.run {
+        currentScope = currentScope.children.first { it is PrimaryConstructorScope }
+        super.visitInitBlock(this)
+        currentScope = currentScope.parent!!
+    }
+
+    override fun visitDelegationSpecifiers(ctx: kobraParser.DelegationSpecifiersContext) {}
 }
 
 fun SyntaxTreeBuilderVisitor.generateCode() = StringBuilder().also {

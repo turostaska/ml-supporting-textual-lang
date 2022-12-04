@@ -119,17 +119,24 @@ class ClassMethodSymbol(
 open class TypeSymbol(
     override val name: String,
     val referencedType: Type,
+    val superTypeSymbols: Set<TypeSymbol>,
     var scope: ClassDeclarationScope? = null,
 ) : Symbol() {
     val classMethods: Set<MethodSymbol> get() {
         return scope!!.classMethods
     }
 
+    val properties: Set<VariableSymbol> get() {
+        return scope!!.properties
+    }
+
     override val type: String = "{ Type: ${referencedType.name} }"
 
     override fun toString() = "class $name (user-defined)"
 
-    constructor(name: String, referencedType: Type): this(name, referencedType, null)
+    constructor(name: String, referencedType: Type): this(name, referencedType, setOf(), null)
+    constructor(name: String, referencedType: Type, superTypeSymbols: Set<TypeSymbol>)
+            : this(name, referencedType, superTypeSymbols, null)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -156,7 +163,7 @@ fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) this.referencedType
 class BuiltInTypeSymbol(
     name: String,
     referencedType: Type,
-) : TypeSymbol(name, referencedType, null) {
+) : TypeSymbol(name, referencedType, emptySet(), null) {
     override val type: String = "{ Built-in Type: ${referencedType.name} }"
 
     override fun toString() = "class $name (built-in)"

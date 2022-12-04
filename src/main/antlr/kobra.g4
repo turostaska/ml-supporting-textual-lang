@@ -29,7 +29,15 @@ propertyDeclaration
     ;
 
 functionDeclaration // todo: modifiers
-    : FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
+    : functionModifiers? FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
+    ;
+
+functionModifiers
+    : functionModifier+
+    ;
+
+functionModifier
+    : OVERRIDE
     ;
 
 variableDeclaration
@@ -79,7 +87,14 @@ classBody: LCURL NL* classMemberDeclarations NL* RCURL;
 
 classMemberDeclarations: (classMemberDeclaration NL*)*;
 
-classMemberDeclaration: declaration;
+classMemberDeclaration
+    : declaration
+    | initBlock
+    ;
+
+initBlock
+    : INIT NL* block
+    ;
 
 primaryConstructor
     : CONSTRUCTOR? classParameters
@@ -102,7 +117,7 @@ delegationSpecifier
     ;
 
 constructorInvocation
-    : functionParameters
+    : valueArguments
     ;
 
 // SECTION: expressions
@@ -415,6 +430,7 @@ THROW: 'throw';
 CONTINUE: 'continue';
 BREAK: 'break';
 WHEN: 'when';
+INIT: 'init';
 
 // SECTION: lexicalModifiers
 
@@ -424,6 +440,8 @@ PROTECTED: 'protected';
 
 VAL: 'val';
 VAR: 'var';
+
+OVERRIDE: 'override';
 
 STRING: '"' (~[\r\n"])* '"';
 

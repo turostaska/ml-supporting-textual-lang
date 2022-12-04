@@ -8,6 +8,7 @@ import type.*
 import type.util.contains
 import type.util.find
 import type.util.findInSubtree
+import util.throwError
 
 // symtab a hibakeresőben vagy a kódgeneráló visitorban?
 class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
@@ -33,8 +34,14 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             throw RuntimeException("Redefinition of class '$className'")
 
         val declaredType = typeHierarchy.addType(className, baseClassNames = superClasses.toSet())
-        val typeSymbol = TypeSymbol(className, declaredType)
+        val superTypeSymbols = superClasses.map { currentScope.resolveTypeOrThrow(it) }.toSet()
+        val typeSymbol = TypeSymbol(className, declaredType, superTypeSymbols)
         currentScope.addType(typeSymbol)
+
+        currentScope.addAll(
+            *superTypeSymbols.flatMap { it.classMethods }.toTypedArray(),
+            *superTypeSymbols.flatMap { it.properties }.toTypedArray(),
+        )
 
         currentScope = ClassDeclarationScope(currentScope, typeSymbol)
         super.visitClassDeclaration(ctx)
@@ -87,8 +94,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
         // todo: rekurzívan feloldani a modulok szkópját
 
-        if (currentScope.resolveVariableLocally(name) != null)
-            throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
+//        if (currentScope.resolveVariableLocally(name) != null)
+//            throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
 
         if (expression().inferredType.isNotSubtypeOf(typeSymbol))
             throw RuntimeException("Invalid value: $typeSymbol should be given but ${expression().inferredType} found")
@@ -127,6 +134,14 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val returnType = currentScope.resolveTypeOrThrow(returnTypeName)
         require(statements.lastOrNull()?.isReturnStatement == true || returnType == globalScope.UNIT) {
             "Last statement must be return OR return type must be Unit"
+        }
+
+        if (this.functionModifiers().functionModifier().any { it.OVERRIDE() != null }) {
+            (currentScope as? ClassDeclarationScope)
+                ?: throwError { "Override modifier on a method that doesn't belong to a class" }
+            require(currentScope.resolveType(functionName) != null
+                || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name == "Module" }
+                    && functionName == "forward"))
         }
 
         val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value).let(::listOf) }

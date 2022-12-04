@@ -4,6 +4,7 @@ import com.kobra.kobraParser
 import symtab.extensions.className
 import symtab.extensions.superClasses
 import syntax.SyntaxTreeNode
+import syntax.expression.toPythonCode
 import util.joinToCodeWithTabToAllLinesButFirst
 import util.prependTab
 import util.prependTabToAllLinesButFirst
@@ -16,10 +17,14 @@ class ClassDeclarationNode(
     private val name = ctx.className
     private val superClasses = ctx.superClasses
     private val members get() = children.filterIsInstance<ClassPropertyDeclarationNode>()
+    private val initStatements get() = children.filterIsInstance<ExpressionNode>()
     private val constructorParameterMembers get() = members.filter { it.isConstructorParameter }
+    private val constructorParameters = ctx.primaryConstructor()?.classParameters()?.classParameter()?.map {
+        it.simpleIdentifier().text
+    } ?: emptyList()
 
     // todo: check member functions
-    private val isEmpty get() = members.isEmpty()
+    private val isEmpty get() = members.isEmpty() && superClasses.isEmpty()
 
     // todo: static fields
     override fun toCode(): String {
@@ -46,20 +51,29 @@ class ClassDeclarationNode(
     }
 
     // todo: constructor parameters
-    private val constructorCode get() = takeIf(members.any()) { """
-            |def __init__(self, $constructorParameters):
+    private val constructorCode get() = takeIf(!isEmpty) { """
+            |def __init__(self, $constructorParametersCode):
             |    $superCall
-            |    ${members.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
+            |    ${constructorParameterMembers.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
+            |    $initCalls
             |    
         """.trimMargin()
     }
 
     private val superCall get() = if (superClasses.any()) { """
-        |super().__init__()
+        |super().__init__($superCallParams)
     """.trimMargin() } else "pass"
 
-    private val constructorParameters get() = """
-        |${constructorParameterMembers.joinToString(separator = ", ") { it.name }}
+    private val superCallParams = ctx.delegationSpecifiers()?.delegationSpecifier()?.firstOrNull()
+        ?.constructorInvocation()?.valueArguments()?.valueArgument()?.joinToString { it.expression().toPythonCode() }
+        ?: ""
+
+    private val initCalls get() = if (initStatements.any()) """
+        |${initStatements.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() } }
+    """.trimMargin() else "pass"
+
+    private val constructorParametersCode get() = """
+        |${constructorParameters.joinToString(separator = ", ") { it }}
     """.trimMargin()
 
     private val propertyDeclarationCode get() = """

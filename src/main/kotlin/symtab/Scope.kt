@@ -69,15 +69,15 @@ open class Scope(
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
-                val matchingSymbol = symbols.find { it.name == symbol.name && it is MethodSymbol }
-                if (matchingSymbol != null && matchingSymbol == symbol)
-                    throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
+//                val matchingSymbol = symbols.find { it.name == symbol.name && it is MethodSymbol }
+//                if (matchingSymbol != null && matchingSymbol == symbol)
+//                    throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
                 symbol
             }
 
             is VariableSymbol -> {
-                if (symbols.find { it.name == symbol.name && it is VariableSymbol } != null)
-                    throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
+//                if (symbols.find { it.name == symbol.name && it is VariableSymbol } != null)
+//                    throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
                 symbol
             }
 
@@ -164,6 +164,7 @@ class ClassDeclarationScope(
 
     val className = typeSymbol.name
     val classMethods: Set<MethodSymbol> get() = symbols.filterIsInstance<MethodSymbol>().toSet()
+    val properties: Set<VariableSymbol> get() = symbols.filterIsInstance<VariableSymbol>().toSet()
 }
 
 class PrimaryConstructorScope(

@@ -12,7 +12,7 @@ import util.runPythonScript
 val symtabBuilder = SymtabBuilderVisitor()
 
 fun main() {
-    val code = Resources.read("hello_world.kb")
+    val code = Resources.read("mnist.kb")
     val lexer = kobraLexer(CharStreams.fromString(code))
     val tokens = CommonTokenStream(lexer)
     val program = kobraParser(tokens).program()

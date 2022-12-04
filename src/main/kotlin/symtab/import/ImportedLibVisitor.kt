@@ -105,6 +105,8 @@ class ImportedLibVisitor(
         // Metaclasses are not supported yet
         val superClassesWithoutMetaClasses = this.arglist()?.argument()?.filter { it.ASSIGN() == null } ?: emptyList()
 
+        val superTypeSymbols = superClassesWithoutMetaClasses.mapNotNull { currentScope.resolveType(it.text) }
+
         // Some types are not supported yet, we filter these out
         val superClasses = superClassesWithoutMetaClasses.map { it.text }.filter {
             currentScope.resolveType(it) != null
@@ -127,6 +129,10 @@ class ImportedLibVisitor(
         } catch (_: RuntimeException) {}
 
         currentScope = ClassDeclarationScope(currentScope, typeSymbol)
+        currentScope.addAll(
+            *superTypeSymbols.flatMap { it.classMethods }.toTypedArray(),
+            *superTypeSymbols.flatMap { it.properties }.toTypedArray(),
+        )
         super.visitClassdef(ctx)
         currentScope = currentScope.parent!!
     }

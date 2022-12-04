@@ -150,8 +150,8 @@ class TypeInference(
 
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
+                            currentScope = currentScope.findClassScope(receiver.type)!!
                             receiver = currentScope.resolveOrThrow(suffixId!!)
-                            currentScope = currentScope.findClassScope(receiver.name)!!
                         }
                         else -> throwError { "Unknown suffix: '${suffix.text}'" }
                     }
@@ -171,7 +171,8 @@ class TypeInference(
             }
         }
 
-        return receiver.name.let { currentScope.resolveTypeOrThrow(it) }
+        return (receiver as? VariableSymbol)?.typeSymbol
+            ?: receiver.name.let { currentScope.resolveTypeOrThrow(it) }
     }
 
     private val kobraParser.PrimaryExpressionContext.inferredType: TypeSymbol
