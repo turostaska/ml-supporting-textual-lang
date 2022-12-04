@@ -34,21 +34,8 @@ class ClassDeclarationNode(
 
             name to rhs
         } ?: emptyList()
-//
-//    private val classFunctionDeclarationNodes =
-//        ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.filter {
-//            it.declaration()?.functionDeclaration() != null
-//        }?.map {
-//            val functionName = it.declaration().functionDeclaration().simpleIdentifier().text
-//
-//            """
-//                |def $functionName:
-//                |
-//            """.trimMargin()
-//        }
 
-    // todo: check member functions
-    private val isEmpty get() = members.isEmpty() && superClasses.isEmpty()
+    private val isEmpty get() = members.isEmpty() && superClasses.isEmpty() && classMethodNodes.isEmpty()
 
     // todo: static fields
     override fun toCode(): String {
