@@ -38,12 +38,11 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val typeSymbol = TypeSymbol(className, declaredType, superTypeSymbols)
         currentScope.addType(typeSymbol)
 
+        currentScope = ClassDeclarationScope(currentScope, typeSymbol)
         currentScope.addAll(
             *superTypeSymbols.flatMap { it.classMethods }.toTypedArray(),
             *superTypeSymbols.flatMap { it.properties }.toTypedArray(),
         )
-
-        currentScope = ClassDeclarationScope(currentScope, typeSymbol)
         super.visitClassDeclaration(ctx)
         currentScope = currentScope.parent!!
     }
@@ -92,10 +91,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val name = simpleIdentifier().text
         val typeSymbol = type()?.text?.trim()?.let { currentScope.resolveType(it) } ?: expression().inferredType
 
-        // todo: rekurzívan feloldani a modulok szkópját
-
-//        if (currentScope.resolveVariableLocally(name) != null)
-//            throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
+        if (currentScope.resolveVariableLocally(name) != null)
+            throw RuntimeException("Redeclaration of variable '$name' in scope '${currentScope.name}'")
 
         if (expression().inferredType.isNotSubtypeOf(typeSymbol))
             throw RuntimeException("Invalid value: $typeSymbol should be given but ${expression().inferredType} found")
