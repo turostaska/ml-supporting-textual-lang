@@ -9,9 +9,8 @@ class FunctionDeclarationNode(
     parent: SyntaxTreeNode,
     methodSymbol: MethodSymbol,
 ): SyntaxTreeNode(parent) {
-    private val functionName = methodSymbol.name
+    private val functionName = methodSymbol.pythonSymbolName
     private val returnTypeName = methodSymbol.returnTypeName
-    // todo: MethodSymbol's return type should be a TypeSymbol
     private val returnTypeNamePy = methodSymbol.returnType?.referencedType?.pythonName ?: returnTypeName
     private val params = methodSymbol.params
 

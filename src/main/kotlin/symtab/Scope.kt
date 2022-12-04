@@ -69,15 +69,26 @@ open class Scope(
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
-//                val matchingSymbol = symbols.find { it.name == symbol.name && it is MethodSymbol }
-//                if (matchingSymbol != null && matchingSymbol == symbol)
-//                    throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
+                val matchingSymbol = symbols.find { it.name == symbol.name }
+                matchingSymbol?.let {
+                    if (it is MethodSymbol)
+                        throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
+                    else if (it is VariableSymbol)
+                        symbol.pythonSymbolName = getUniqueName(symbol.name)
+                }
+
                 symbol
             }
 
             is VariableSymbol -> {
-//                if (symbols.find { it.name == symbol.name && it is VariableSymbol } != null)
-//                    throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
+                val matchingSymbol = symbols.find { it.name == symbol.name }
+                matchingSymbol?.let {
+                    if (it is VariableSymbol)
+                        throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
+                    else if (it is MethodSymbol)
+                        symbol.pythonSymbolName = getUniqueName(symbol.name)
+                }
+
                 symbol
             }
 
@@ -142,6 +153,13 @@ open class Scope(
 
     fun addAllBuiltInTypes(vararg symbols: BuiltInTypeSymbol) {
         symbols.forEach(this::addBuiltInType)
+    }
+
+    private fun getUniqueName(name: String): String {
+        var name = name
+        while ( symbols.find { it.name == name } != null )
+            name = "_$name"
+        return name
     }
 
     object Serial { var serial = 0 }

@@ -2,7 +2,6 @@ package symtab
 
 import type.Type
 import type.TypeNames
-import util.throwError
 import java.util.*
 
 val Boolean.asMutability get() = if (this) Mutability.VAR else Mutability.VAL
@@ -25,7 +24,6 @@ sealed class Symbol {
             }
             return field
         }
-        set(value) = throwError { "Symbol name can't be set." }
 }
 
 class ModuleSymbol(
