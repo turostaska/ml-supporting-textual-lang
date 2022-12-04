@@ -69,26 +69,10 @@ open class Scope(
     fun add(symbol: Symbol) {
         symbols += when (symbol) {
             is MethodSymbol -> {
-                val matchingSymbol = symbols.find { it.name == symbol.name }
-                matchingSymbol?.let {
-                    if (it is MethodSymbol)
-                        throw RuntimeException("Redefinition of function $symbol in scope ${this.name}")
-                    else if (it is VariableSymbol)
-                        symbol.pythonSymbolName = getUniqueName(symbol.name)
-                }
-
                 symbol
             }
 
             is VariableSymbol -> {
-                val matchingSymbol = symbols.find { it.name == symbol.name }
-                matchingSymbol?.let {
-                    if (it is VariableSymbol)
-                        throw RuntimeException("Redefinition of variable ${symbol.name} in scope ${this.name}")
-                    else if (it is MethodSymbol)
-                        symbol.pythonSymbolName = getUniqueName(symbol.name)
-                }
-
                 symbol
             }
 
