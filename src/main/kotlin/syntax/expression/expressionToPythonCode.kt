@@ -133,7 +133,7 @@ private fun PostfixUnaryExpressionContext.toPythonCode(): String {
             }
 
             suffix.isCallSuffix() -> {
-                code.append("(${suffix.params().joinToString { it.text }})")
+                code.append("(${suffix.params().joinToString { it.expression().toPythonCode() }})")
             }
 
             else -> TODO()
@@ -149,6 +149,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isNullLiteral -> "None"
         isInt -> this.literalConstant().IntegerLiteral().text
         isString -> this.stringLiteral().text
+        isFloat -> this.literalConstant().FloatLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
         isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"

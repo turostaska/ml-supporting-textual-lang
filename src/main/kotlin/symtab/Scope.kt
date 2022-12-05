@@ -19,8 +19,18 @@ open class Scope(
         return resolveMethodLocally(name) ?: this.parent?.resolveMethod(name)
     }
 
-    fun resolveVariable(name: String): VariableSymbol? =
-        resolveVariableLocally(name) ?: this.parent?.resolveVariable(name)
+    fun resolveVariable(name: String): VariableSymbol? {
+        return if ("." !in name)
+            symbols.findLast { it.name == name && it is VariableSymbol } as? VariableSymbol
+                ?: this.parent?.resolveVariable(name)
+        else {
+            val (module, name) = name.splitOnFirst(".")
+            // todo: ha a module egy variable
+            val typeScope = resolveVariable(module)?.typeSymbol?.scope
+                ?: throwError { "Receiver for variable '$module' cannot be resolved" }
+            typeScope.resolveVariable(name)
+        }
+    }
 
     fun resolveType(name: String): TypeSymbol? {
         return if ("." !in name)

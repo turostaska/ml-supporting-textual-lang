@@ -21,6 +21,10 @@ private val SPECIAL_IMPORT_AS = mapOf(
     "max_pool2d_with_indices" to "max_pool2d",
 )
 
+private val SPECIAL_IMPORT = listOf(
+    "torch.device",
+)
+
 /*
  * from a import B, C   : add B and C to the global scope
  * from a import *      : add everything from 'a' to global scope
@@ -99,7 +103,9 @@ class ImportedLibVisitor(
         val className = TypeNames.pythonTypeNamesToKobraMap[classNamePy] ?: classNamePy
         val parentModules = currentModuleName.split(".")
 
-        if (symbolsToImportAs?.keys?.toList()?.containsQualifier(parentModules, className) == false)
+        if (symbolsToImportAs?.keys?.toList()?.containsQualifier(parentModules, className) == false
+            && !SPECIAL_IMPORT.containsQualifier(parentModules, className)
+        )
             return
 
         // Metaclasses are not supported yet
