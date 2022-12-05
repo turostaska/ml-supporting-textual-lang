@@ -70,10 +70,11 @@ class FindNamesToImportVisitor(
         if (testlist_star_expr()?.firstOrNull()?.text != "__all__")
             return
 
-        val namesToImport = this.testListComp()?.test()?.map { it.text }
+        val namesToImport = this.testListComp()?.test()?.asSequence()?.map { it.text }
             ?.map { it.removeSurrounding("'") }
+            ?.map { it.removeSurrounding("\"") }
             ?.filter { !it.startsWith("_") }
-            ?.map { "$moduleName.$it" }
+            ?.map { "$moduleName.$it" }?.toList()
                 ?: emptyList()
         names += namesToImport
     }

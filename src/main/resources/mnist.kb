@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-// from torchvision import datasets, transforms
 import torchvision.transforms as transforms
+import torchvision.datasets as datasets
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -39,3 +39,6 @@ val transform = transforms::Compose([
     transforms::Normalize((0.1307,), (0.3081,)),
 ])
 
+// todo: named parameters
+val dsTrain = datasets::MNIST("../data", train=true, download=true, transform=transform)
+val dsTest  = datasets::MNIST("../data", train=false, transform=transform)

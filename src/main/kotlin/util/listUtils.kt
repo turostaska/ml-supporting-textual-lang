@@ -12,7 +12,7 @@ fun List<String>.containsQualifier(parents: List<String>, name: String): Boolean
     return if (parents.isEmpty()) {
         this.any { name in it }
     } else {
-        val qualifier = "${ parents.joinToString(".") }.$name"
+        val qualifier = "${ parents.joinToString(".") }.$name".lowercase()
         if (this.any { qualifier in it })
             true
         // To import stuff for Dropout, stuff from the dropout package are needed
