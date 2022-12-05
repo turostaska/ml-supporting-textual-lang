@@ -133,7 +133,10 @@ private fun PostfixUnaryExpressionContext.toPythonCode(): String {
             }
 
             suffix.isCallSuffix() -> {
-                code.append("(${suffix.params().joinToString { it.expression().toPythonCode() }})")
+                val namedParamsCode = suffix.namedParams().map {(name, expr) ->
+                    name?.let { "$name=${expr.toPythonCode()}" } ?: expr.toPythonCode()
+                }.joinToString()
+                code.append("(${namedParamsCode})")
             }
 
             else -> TODO()

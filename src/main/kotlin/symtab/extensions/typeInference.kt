@@ -23,6 +23,7 @@ class TypeInference(
     private val INT get() = globalScope.resolveTypeOrThrow(TypeNames.INT)
     private val FLOAT get() = globalScope.resolveTypeOrThrow(TypeNames.FLOAT)
     private val STRING get() = globalScope.resolveTypeOrThrow(TypeNames.STRING)
+    private val TUPLE get() = globalScope.resolveTypeOrThrow(TypeNames.TUPLE)
     private val NOTHING_N get() = globalScope.resolveTypeOrThrow(TypeNames.NOTHING_N)
     private val NOTHING get() = globalScope.resolveTypeOrThrow(TypeNames.NOTHING)
     private val LIST get() = globalScope.resolveTypeOrThrow(TypeNames.LIST)
@@ -160,12 +161,16 @@ class TypeInference(
                 suffix.isCallSuffix() -> {
                     // todo: nem veszi figyelembe a paramétereket
                     // todo: csak akkor jó, ha az utolsó suffix, ha nem, akkor a visszatérési típus scope-ja kell
-                    return currentScope.resolveMethodOrThrow(receiver.name).returnType ?: UNIT
-//                    return currentScope.resolveMethod(receiver.name)?.returnType
-//                        ?: currentScope.resolveVariable(receiver.name)?.typeSymbol?.let {
-//                            currentScope.findModuleOrClassScope(it.name)?.resolveMethod("forward")?.returnType
-//                        }
-//                        ?: UNIT
+                    val methodSymbol = currentScope.resolveMethodOrThrow(receiver.name)
+
+                    val args = suffix.callSuffix()?.valueArguments()?.valueArgument()?.mapNotNull {
+                        it.simpleIdentifier()?.text
+                    } ?: emptyList()
+                    require( args.all { it in methodSymbol.params.keys } ) {
+                        "Invalid argument name, please verify. The named arguments were $args"
+                    }
+
+                    return methodSymbol.returnType ?: UNIT
                 }
                 else -> TODO()
             }
@@ -186,7 +191,10 @@ class TypeInference(
                 currentScope.resolveVariable(simpleIdentifier().text)?.typeSymbol
                     ?: throw RuntimeException("Simple identifier '${this.text}' has no type specified")
             }
-            isParenthesized -> this.parenthesizedExpression().expression().inferredType
+            isParenthesized -> this.parenthesizedExpression().expression().let {
+                if (it.size > 1) TUPLE
+                else it.first().inferredType
+            }
             isCollection -> LIST
             isReturnStatement -> NOTHING
             isIfExpression -> this.ifExpression()!!.inferredType

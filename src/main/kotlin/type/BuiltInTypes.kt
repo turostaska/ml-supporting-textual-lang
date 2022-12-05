@@ -45,6 +45,11 @@ object BuiltInTypes {
     }
     val listN = list.nullableVariant
 
+    val tuple = Type(TypeNames.TUPLE, false, pythonName = TypeNames.TUPLE_PY).also {
+        addBuiltInType(it)
+    }
+    val tupleN = tuple.nullableVariant
+
     val unit = Type(TypeNames.UNIT, false, pythonName = TypeNames.UNIT_PY).also {
         addBuiltInType(it)
     }

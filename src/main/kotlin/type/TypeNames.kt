@@ -12,6 +12,7 @@ object TypeNames {
     const val RANGE = "Range"
     const val LIST = "List"
     const val FLOAT = "Float"
+    const val TUPLE = "Tuple"
 
     const val ANY_N = "Any?"
     const val STRING_N = "String?"
@@ -21,6 +22,7 @@ object TypeNames {
     const val RANGE_N = "Range?"
     const val LIST_N = "List?"
     const val FLOAT_N = "Float?"
+    const val TUPLE_N = "Tuple?"
 
     const val ANY_PY = "any"
     const val STRING_PY = "str"
@@ -30,6 +32,7 @@ object TypeNames {
     const val UNIT_PY = "None"
     const val LIST_PY = "list"
     const val FLOAT_PY = "float"
+    const val TUPLE_PY = "tuple"
 
     val pythonTypeNamesToKobraMap = mapOf(
         ANY_PY to ANY,
@@ -40,5 +43,6 @@ object TypeNames {
         LIST_PY to LIST,
         FLOAT_PY to FLOAT,
         UNIT_PY to UNIT,
+        TUPLE_PY to TUPLE,
     )
 }
