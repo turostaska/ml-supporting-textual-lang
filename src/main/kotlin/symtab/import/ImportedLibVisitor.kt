@@ -19,16 +19,11 @@ import util.secondOrNull
 
 private val SPECIAL_IMPORT_AS = mapOf(
     "max_pool2d_with_indices" to "max_pool2d",
-    "torch.utils" to "torch.utils",
-    "torch.utils.data" to "torch.utils.data",
-    "torch.utils.data.DataLoader" to "torch.utils.data.DataLoader",
 )
 
 private val SPECIAL_IMPORT = listOf(
     "torch.device",
-    "torch.utils",
-    "torch.utils.data",
-    "torch.utils.data.DataLoader",
+    "torch.optim.Adam",
 )
 
 /*
