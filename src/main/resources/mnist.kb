@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+// from torchvision import datasets, transforms
+import torchvision.transforms as transforms
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -29,4 +31,11 @@ class Net: nn.Module {
 }
 
 val device = torch::device( if (torch::cuda::is_available()) "cuda" else "cpu" )
+
+val batchSize = 8
+
+val transform = transforms::Compose([
+    transforms::ToTensor(),
+    transforms::Normalize((0.1307,), (0.3081,)),
+])
 

@@ -211,7 +211,7 @@ primaryExpression
     ;
 
 parenthesizedExpression
-    : LPAREN NL* expression NL* RPAREN
+    : LPAREN NL* (expression (NL* COMMA NL* expression)* (NL* COMMA)?)? NL* RPAREN
     ;
 
 literalConstant

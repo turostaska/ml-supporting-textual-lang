@@ -151,7 +151,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isString -> this.stringLiteral().text
         isFloat -> this.literalConstant().FloatLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
-        isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
+        isParenthesized -> "(${this.parenthesizedExpression().expression().joinToString { it.toPythonCode() }})"
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
         isReturnStatement -> "return ${this.jumpExpression().expression().toPythonCode()}"
         isIfExpression -> this.ifExpression().toPythonCode()
