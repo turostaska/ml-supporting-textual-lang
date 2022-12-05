@@ -45,6 +45,13 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         )
         super.visitClassDeclaration(ctx)
         currentScope = currentScope.parent!!
+
+        // If no constructor exists, we add an implicit one to the scope with no parameters
+        if (currentScope.resolveMethod(className) == null) {
+            currentScope.add(
+                MethodSymbol(typeSymbol.name, typeSymbol, emptyMap())
+            )
+        }
     }
 
     override fun visitPrimaryConstructor(ctx: PrimaryConstructorContext): Unit = ctx.run {

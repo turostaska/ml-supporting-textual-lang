@@ -43,6 +43,9 @@ val transform = transforms::Compose([
 val dsTrain = datasets::MNIST("../data", train=true, download=true, transform=transform)
 val dsTest  = datasets::MNIST("../data", train=false, transform=transform)
 
-val trainLoader = DataLoader(train_set, batch_size = batchSize)
+val trainLoader = DataLoader(dsTrain, batch_size = batchSize)
+val testLoader = DataLoader(dsTest, batch_size = 1)
+
+val model = Net().to(device)
 
 
