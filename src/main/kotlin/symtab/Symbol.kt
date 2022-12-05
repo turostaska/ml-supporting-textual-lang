@@ -38,6 +38,7 @@ class VariableSymbol(
     override val name: String,
     val typeSymbol: TypeSymbol,
     val mutability: Mutability,
+    val isMember: Boolean = false,
     override val type: String = typeSymbol.name,
 ) : Symbol() {
 

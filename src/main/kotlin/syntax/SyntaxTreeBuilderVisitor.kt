@@ -50,7 +50,14 @@ class SyntaxTreeBuilderVisitor(
         val symbol = currentScope.resolveVariable(ctx.identifier().text)!!
         val receivers = ctx.identifier().text.split(".", "::").dropLast(1)
 
-        AssignmentNode(symbol, receivers, expression(), currentNode)
+        // ToDo: ez így nem túl jó
+        val rhsIsOnSelf = expression()?.text?.let {
+            it.substringBefore(".", it.substringBefore("("))
+        }?.let {
+            currentScope.resolveVariable(it)
+        }?.isMember == true
+
+        AssignmentNode(symbol, receivers, expression(), currentNode, rhsIsOnSelf)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {

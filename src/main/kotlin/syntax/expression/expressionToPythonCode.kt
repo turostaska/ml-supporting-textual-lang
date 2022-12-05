@@ -133,9 +133,7 @@ private fun PostfixUnaryExpressionContext.toPythonCode(): String {
             }
 
             suffix.isCallSuffix() -> {
-                val namedParamsCode = suffix.callSuffix().valueArguments().valueArgument().joinToString {
-                    it.expression().toPythonCode()
-                }
+                val namedParamsCode = suffix.namedParams()
                 code.append("(${namedParamsCode})")
             }
 

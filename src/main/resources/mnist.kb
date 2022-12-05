@@ -16,7 +16,7 @@ class Net: nn.Module {
 
     override fun forward(input: Any): Any {
         var x = input
-        x = conv1(x)    // todo: codegennél nem tudja, hogy a selfhez tartozik
+        x = conv1(x)
         x = F::relu(x)
         x = conv2(x)
         x = F::relu(x)

@@ -13,9 +13,10 @@ class FunctionDeclarationNode(
     private val returnTypeName = methodSymbol.returnTypeName
     private val returnTypeNamePy = methodSymbol.returnType?.referencedType?.pythonName ?: returnTypeName
     private val params = methodSymbol.params
+    private val isClassMethod = parent is ClassDeclarationNode
 
     override fun toCode() = """
-        |def $functionName($paramsToCode) -> $returnTypeNamePy:
+        |def $functionName($selfParam $paramsToCode) -> $returnTypeNamePy:
         |    $statementsToCode
     """.trimMargin()
 
@@ -23,6 +24,8 @@ class FunctionDeclarationNode(
         sb.append(this.toCode().prependTab(indent))
         sb.appendLine(System.lineSeparator())
     }
+
+    private val selfParam = if (isClassMethod) "self," else ""
 
     private val paramsToCode
         get() = params.map { (k, v) -> "$k: ${v.first().referencedType.pythonName}" }.joinToString()

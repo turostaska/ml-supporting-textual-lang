@@ -89,7 +89,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             currentScope += VariableSymbol(name, typeSymbol, Mutability.VAL)
         } else {
             // A class member, we add it to the class scope
-            currentScope.parent!! += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
+            currentScope.parent!! += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(), true)
         }
         super.visitClassParameter(this)
     }
@@ -104,7 +104,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (expression().inferredType.isNotSubtypeOf(typeSymbol))
             throw RuntimeException("Invalid value: $typeSymbol should be given but ${expression().inferredType} found")
 
-        currentScope += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(),)
+        currentScope += VariableSymbol(
+            name,
+            typeSymbol,
+            this.mutability.getAsMutability(),
+            currentScope is ClassDeclarationScope
+        )
 
         // if type symbol has forward function defined, a method should be added to the scope as well
         typeSymbol.forwardFunction()?.let { forwardFunction ->
