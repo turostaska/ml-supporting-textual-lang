@@ -19,10 +19,16 @@ import util.secondOrNull
 
 private val SPECIAL_IMPORT_AS = mapOf(
     "max_pool2d_with_indices" to "max_pool2d",
+    "torch.utils" to "torch.utils",
+    "torch.utils.data" to "torch.utils.data",
+    "torch.utils.data.DataLoader" to "torch.utils.data.DataLoader",
 )
 
 private val SPECIAL_IMPORT = listOf(
     "torch.device",
+    "torch.utils",
+    "torch.utils.data",
+    "torch.utils.data.DataLoader",
 )
 
 /*
@@ -147,7 +153,10 @@ class ImportedLibVisitor(
         // println("Function definition of $currentModuleName.$functionName")
         if (functionName == "__init__") {
             (currentScope as? ClassDeclarationScope)?.typeSymbol?.runCatching {
-                currentScope.parent!!.add(MethodSymbol(this.name, this, params))
+                val methodSymbol = MethodSymbol(this.name, this, params)
+                if ((currentScope.parent as? ModuleScope)?.importAlias == (currentScope as ClassDeclarationScope).typeSymbol.name) {
+                    currentScope.parent!!.parent!!.add(methodSymbol)
+                } else currentScope.parent!!.add(methodSymbol)
             }
             return
         }

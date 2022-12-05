@@ -60,7 +60,12 @@ private fun getSourceOfPackage(
 ): String {
     val packageName = (parentModules.joinToString("/", postfix = "/") + moduleName).removePrefix("/")
 
-    return getSourceOfPackageOrNull(moduleName, parentModules)
+    val source = getSourceOfPackageOrNull(moduleName, parentModules)
+        ?: if (moduleName.lowercase() != moduleName)
+            getSourceOfPackageOrNull(moduleName.lowercase(), parentModules)
+        else null
+
+    return source
         ?: throw FileNotFoundException("Package not found: $packageName")
 }
 
@@ -79,6 +84,7 @@ private fun getSourceOfPackageOrNull(
         tryOrNull { "$dir/$packageName.py".let(Resources::read) }
     }.find { it != null } ?:
     tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::read) } ?:
+    tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.py".let(Resources::read) } ?:
     tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::read) }
 }
 

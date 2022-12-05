@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+import torch.utils.data.DataLoader as DataLoader
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -39,6 +40,9 @@ val transform = transforms::Compose([
     transforms::Normalize((0.1307,), (0.3081,)),
 ])
 
-// todo: named parameters
 val dsTrain = datasets::MNIST("../data", train=true, download=true, transform=transform)
 val dsTest  = datasets::MNIST("../data", train=false, transform=transform)
+
+val trainLoader = DataLoader(train_set, batch_size = batchSize)
+
+
