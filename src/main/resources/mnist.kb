@@ -16,7 +16,7 @@ class Net: nn.Module {
 
     override fun forward(input: Any): Any {
         var x = input
-        x = conv1(x)
+        x = conv1(x)    // todo: codegennél nem tudja, hogy a selfhez tartozik
         x = F::relu(x)
         x = conv2(x)
         x = F::relu(x)
@@ -42,8 +42,8 @@ val transform = transforms::Compose([
     transforms::Normalize((0.1307,), (0.3081,)),
 ])
 
-val dsTrain = datasets::MNIST("../data", train=true, download=true, transform=transform)
-val dsTest  = datasets::MNIST("../data", train=false, transform=transform)
+val dsTrain = datasets::MNIST("./data", train=true, download=true, transform=transform)
+val dsTest  = datasets::MNIST("./data", train=false, transform=transform)
 
 val trainLoader = DataLoader(dsTrain, batch_size = batchSize)
 val testLoader = DataLoader(dsTest, batch_size = 1)

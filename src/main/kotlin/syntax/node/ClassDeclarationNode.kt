@@ -19,11 +19,12 @@ class ClassDeclarationNode(
     private val members get() = children.filterIsInstance<ClassPropertyDeclarationNode>()
     private val initStatements get() = children.filterIsInstance<ExpressionNode>()
     private val constructorParameterMembers get() = members.filter { it.isConstructorParameter }
+    private val nonConstructorParameterMembers get() = members.filter { !it.isConstructorParameter }
     private val constructorParameters = ctx.primaryConstructor()?.classParameters()?.classParameter()?.map {
         it.simpleIdentifier().text
     } ?: emptyList()
 
-    private val classMethodNodes get() = this._children.filterIsInstance<FunctionDeclarationNode>()
+    private val classMethodNodes get() = children.filterIsInstance<FunctionDeclarationNode>()
 
     private val classMemberDeclarations: List<Pair<String, String?>> =
         ctx.classBody()?.classMemberDeclarations()?.classMemberDeclaration()?.filter {
@@ -58,12 +59,6 @@ class ClassDeclarationNode(
     """.trimMargin()
     }
 
-    private val classMemberDeclarationsCode get() = classMemberDeclarations.joinToCodeWithTabToAllLinesButFirst(1) {
-        (lhs, rhs) -> rhs?.let {
-            "_$lhs = $rhs"
-        } ?: "_$lhs"
-    }
-
     private val classMethodsCode get() = this.classMethodNodes.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() }
 
     private val superClassesCode get() = takeIf(superClasses.any()) {
@@ -75,7 +70,7 @@ class ClassDeclarationNode(
             |def __init__(self, $constructorParametersCode):
             |    $superCall
             |    ${constructorParameterMembers.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
-            |    $classMemberDeclarationsCode
+            |    ${nonConstructorParameterMembers.joinToCodeWithTabToAllLinesButFirst(1) { it.toMemberDeclaration() }}
             |    $initCalls
             |    
         """.trimMargin()
