@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torch.utils.data.DataLoader as DataLoader
 import torch.optim.Adam as Adam
+import torch.optim.lr_scheduler as lrScheduler
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -51,3 +52,4 @@ val testLoader = DataLoader(dsTest, batch_size = 1)
 val model = Net().to(device)
 val optimizer = Adam(model.parameters(), lr=lr)
 
+val scheduler = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)

@@ -24,6 +24,7 @@ private val SPECIAL_IMPORT_AS = mapOf(
 private val SPECIAL_IMPORT = listOf(
     "torch.device",
     "torch.optim.Adam",
+    "torch.optim.lr_scheduler.StepLR",
 )
 
 /*

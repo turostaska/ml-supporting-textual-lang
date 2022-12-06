@@ -64,6 +64,7 @@ private fun getSourceOfPackage(
         ?: if (moduleName.lowercase() != moduleName)
             getSourceOfPackageOrNull(moduleName.lowercase(), parentModules)
         else null
+//        ?: getSourceOfPackageOrNull(parentModules.last(), parentModules.dropLast(1))
 
     return source
         ?: throw FileNotFoundException("Package not found: $packageName")
@@ -75,17 +76,17 @@ private fun getSourceOfPackageOrNull(
 ): String? {
     val packageName = (parentModules.joinToString("/", postfix = "/") + moduleName).removePrefix("/")
 
-    return tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::read) } ?:
-    tryOrNull { "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::read) } ?:
+    return "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull) ?:
+    "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::readOrNull) ?:
     SITE_PACKAGE_DIRS.map { dir ->
-        tryOrNull { "$dir/$packageName/__init__.pyi".let(Resources::read) } ?:
-        tryOrNull { "$dir/$packageName/__init__.py".let(Resources::read) } ?:
-        tryOrNull { "$dir/$packageName.pyi".let(Resources::read) } ?:
-        tryOrNull { "$dir/$packageName.py".let(Resources::read) }
+        "$dir/$packageName/__init__.pyi".let(Resources::readOrNull) ?:
+        "$dir/$packageName/__init__.py".let(Resources::readOrNull) ?:
+        "$dir/$packageName.pyi".let(Resources::readOrNull) ?:
+        "$dir/$packageName.py".let(Resources::readOrNull)
     }.find { it != null } ?:
-    tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::read) } ?:
-    tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.py".let(Resources::read) } ?:
-    tryOrNull { "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::read) }
+    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::readOrNull) ?:
+    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull) ?:
+    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::readOrNull)
 }
 
 private val visitedModules = mutableSetOf<String>()
