@@ -56,6 +56,5 @@ val optimizer = Adam(model.parameters(), lr=lr)
 val scheduler = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)
 
 for ( epoch in 1 .. numEpochs) {
-    print("Hello")
-    print("world")
+    print("Epoch ${i}")
 }

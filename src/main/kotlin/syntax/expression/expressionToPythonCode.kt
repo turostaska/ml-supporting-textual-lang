@@ -150,7 +150,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isBoolean -> if (literalConstant().BooleanLiteral().text == "true") "True" else "False"
         isNullLiteral -> "None"
         isInt -> this.literalConstant().IntegerLiteral().text
-        isString -> this.stringLiteral().text
+        isString -> this.stringLiteral().text.let(::toPythonFormatString)
         isFloat -> this.literalConstant().FloatLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
         isParenthesized -> "(${this.parenthesizedExpression().expression().joinToString { it.toPythonCode() }})"
