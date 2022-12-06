@@ -121,7 +121,8 @@ private fun PostfixUnaryExpressionContext.toPythonCode(): String {
     if (postfixUnarySuffix()?.firstOrNull() == null)
         return this.primaryExpression().toPythonCode()
 
-    val receiverId = primaryExpression().simpleIdentifier().text
+    val receiverId = primaryExpression().simpleIdentifier()?.text
+        ?: primaryExpression().text?.let { if (it == "this") "self" else it }
 
     val code = StringBuilder(receiverId)
     for (suffix in postfixUnarySuffix()) {

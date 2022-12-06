@@ -133,10 +133,12 @@ class TypeInference(
         if (postfixUnarySuffix()?.firstOrNull() == null)
             return this.primaryExpression().inferredType
 
-        val receiverId = primaryExpression().simpleIdentifier().text
+        val receiverId = primaryExpression().simpleIdentifier()?.text
+            ?: primaryExpression().text
 
         var currentScope = currentScope
-        var receiver = currentScope.resolveOrThrow(receiverId)
+        var receiver = if (receiverId == "this") currentScope.getParentTypeSymbol()
+            else currentScope.resolveOrThrow(receiverId)
         for (suffix in postfixUnarySuffix()) {
             val suffixId = suffix.navigationSuffix()?.simpleIdentifier()?.text
             when {
@@ -152,6 +154,9 @@ class TypeInference(
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
                             currentScope = currentScope.findClassScope(receiver.type)!!
+                            receiver = currentScope.resolveOrThrow(suffixId!!)
+                        }
+                        is TypeSymbol -> {
                             receiver = currentScope.resolveOrThrow(suffixId!!)
                         }
                         else -> throwError { "Unknown suffix: '${suffix.text}'" }

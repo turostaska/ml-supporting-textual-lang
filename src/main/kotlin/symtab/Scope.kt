@@ -15,6 +15,12 @@ open class Scope(
         parent?.children?.add(this)
     }
 
+    fun getParentTypeSymbol(): TypeSymbol {
+        if (this is ClassDeclarationScope) return this.typeSymbol
+        return this.parent?.getParentTypeSymbol()
+            ?: throwError { "No class declaration scope found." }
+    }
+
     fun resolveMethod(name: String): MethodSymbol? {
         return resolveMethodLocally(name) ?: this.parent?.resolveMethod(name)
     }

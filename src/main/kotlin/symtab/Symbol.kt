@@ -156,9 +156,19 @@ open class TypeSymbol(
     }
 }
 
-// todo: reverse map as property
-fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol) this.referencedType.pythonName else name
-
+fun TypeSymbol.pythonName() = if (this is BuiltInTypeSymbol)
+    this.referencedType.pythonName
+else {
+    var name = this.name
+    var parent = scope?.parent
+    while ( parent != null ) {
+        if (parent is ModuleScope && parent.importAlias?.first()?.isUpperCase() == false) {
+            name = "${parent.importAlias}.$name"
+        }
+        parent = parent.parent
+    }
+    name
+}
 class BuiltInTypeSymbol(
     name: String,
     referencedType: Type,
