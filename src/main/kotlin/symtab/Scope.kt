@@ -15,6 +15,10 @@ open class Scope(
         parent?.children?.add(this)
     }
 
+    fun getLastForStatementScope(): Scope? {
+        return this.children.lastOrNull { it.name == "For loop" }
+    }
+
     fun getParentTypeSymbol(): TypeSymbol {
         if (this is ClassDeclarationScope) return this.typeSymbol
         return this.parent?.getParentTypeSymbol()

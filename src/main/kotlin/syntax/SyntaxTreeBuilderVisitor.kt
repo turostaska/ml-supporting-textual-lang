@@ -118,6 +118,14 @@ class SyntaxTreeBuilderVisitor(
         currentScope = currentScope.parent!!
     }
 
+    override fun visitForStatement(ctx: kobraParser.ForStatementContext): Unit = ctx.run {
+        currentNode = ForStatementNode(currentNode, this)
+        currentScope = currentScope.getLastForStatementScope()!!
+        super.visitControlStructureBody(this.controlStructureBody())
+        currentScope = currentScope.parent!!
+        currentNode = currentNode.parent!!
+    }
+
     override fun visitDelegationSpecifiers(ctx: kobraParser.DelegationSpecifiersContext) {}
 }
 

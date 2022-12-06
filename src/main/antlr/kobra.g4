@@ -59,8 +59,16 @@ functionParameter
 
 // SECTION: statements
 
-statement // todo
-    : declaration | assignment | expression
+statement
+    : declaration | assignment | expression | loopStatement
+    ;
+
+loopStatement
+    : forStatement
+    ;
+
+forStatement
+    : FOR NL* LPAREN variableDeclaration IN expression RPAREN NL* controlStructureBody?
     ;
 
 assignment

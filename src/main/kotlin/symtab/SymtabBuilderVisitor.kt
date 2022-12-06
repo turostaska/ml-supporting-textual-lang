@@ -186,6 +186,23 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitImportHeader(this)
     }
 
+    override fun visitForStatement(ctx: ForStatementContext): Unit = ctx.run {
+        val range = this.expression()
+        val loopVariable = ctx.variableDeclaration().simpleIdentifier().text
+
+        require(range.inferredType == globalScope.resolveBuiltInType("Range")) {
+            "A for loop needs a range expression."
+        }
+
+        currentScope = Scope(currentScope, name = "For loop")
+        // Add loop variable to the for statement's scope
+        currentScope.add(
+            VariableSymbol(loopVariable, globalScope.resolveBuiltInType("Int")!!, Mutability.VAR)
+        )
+        super.visitControlStructureBody(this.controlStructureBody())
+        currentScope = currentScope.parent!!
+    }
+
 
     // a ClassDeclarationScope-jában van-e ClassMethodSymbol, aminek a neve forward
     private fun TypeSymbol.forwardFunction(): MethodSymbol? {
