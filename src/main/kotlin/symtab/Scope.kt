@@ -1,5 +1,7 @@
 package symtab
 
+import com.kobra.kobraParser.ForStatementContext
+import com.kobra.kobraParser.UsingStatementContext
 import symtab.Scope.Serial.serial
 import type.nullableVariant
 import util.splitOnFirst
@@ -15,8 +17,16 @@ open class Scope(
         parent?.children?.add(this)
     }
 
-    fun getLastForStatementScope(): Scope? {
-        return this.children.lastOrNull { it.name == "For loop" }
+    fun getForStatementScope(
+        ctx: ForStatementContext,
+    ): Scope? {
+        return this.children.lastOrNull { (it as? ForStatementScope)?.ctx == ctx }
+    }
+
+    fun getUsingStatementScope(
+        ctx: UsingStatementContext,
+    ): Scope? {
+        return this.children.lastOrNull { (it as? UsingStatementScope)?.ctx == ctx }
     }
 
     fun getParentTypeSymbol(): TypeSymbol {
@@ -209,4 +219,16 @@ class ModuleScope(
     val moduleName: String,
     val importAlias: String? = null,
     name: String = "Module scope of $moduleName",
+): Scope(parent, name = name)
+
+class ForStatementScope(
+    parent: Scope?,
+    val ctx: ForStatementContext,
+    name: String = "For scope of $ctx",
+): Scope(parent, name = name)
+
+class UsingStatementScope(
+    parent: Scope?,
+    val ctx: UsingStatementContext,
+    name: String = "Using scope of $ctx",
 ): Scope(parent, name = name)

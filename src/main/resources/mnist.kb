@@ -59,7 +59,7 @@ for ( epoch in 1 .. numEpochs ) {
     print("Epoch ${epoch}")
     model.train()
 
-    for( (input, label) in trainLoader ) {
+    for ( (input, label) in trainLoader ) {
         input = input.to(device)
         label = label.to(device)
 
@@ -71,4 +71,17 @@ for ( epoch in 1 .. numEpochs ) {
 
         print("Training epoch ${epoch} ended, loss: ${loss.item()}")
     }
+
+    model.eval()
+    val testLoss = 0.0
+    // val correct = 0
+    using ( torch.no_grad() ) {
+        for ( (input, label) in testLoader ) {
+            input = input.to(device)
+            label = label.to(device)
+            
+            val output = model(input)
+        }
+    }
+
 }

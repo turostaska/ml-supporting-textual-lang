@@ -203,7 +203,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
             "A for loop needs an iterable expression."
         }
 
-        currentScope = Scope(currentScope, name = "For loop")
+        currentScope = ForStatementScope(currentScope, this)
         // Add loop variables to the for statement's scope
         loopVariables.forEach { loopVariable ->
             val typeSymbol = when (iterable.inferredType) {
@@ -216,6 +216,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
                 VariableSymbol(loopVariable, typeSymbol, Mutability.VAR)
             )
         }
+        super.visitControlStructureBody(this.controlStructureBody())
+        currentScope = currentScope.parent!!
+    }
+
+    override fun visitUsingStatement(ctx: UsingStatementContext): Unit = ctx.run {
+        currentScope = UsingStatementScope(currentScope, this)
         super.visitControlStructureBody(this.controlStructureBody())
         currentScope = currentScope.parent!!
     }

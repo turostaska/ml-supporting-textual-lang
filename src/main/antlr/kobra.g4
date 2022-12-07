@@ -64,7 +64,7 @@ functionParameter
 // SECTION: statements
 
 statement
-    : declaration | assignment | expression | loopStatement
+    : declaration | assignment | expression | loopStatement | usingStatement
     ;
 
 loopStatement
@@ -72,7 +72,11 @@ loopStatement
     ;
 
 forStatement
-    : FOR NL* LPAREN (variableDeclaration | multiVariableDeclaration )IN expression RPAREN NL* controlStructureBody?
+    : FOR NL* LPAREN (variableDeclaration | multiVariableDeclaration) IN expression RPAREN NL* controlStructureBody?
+    ;
+
+usingStatement
+    : USING NL* LPAREN expression RPAREN NL* controlStructureBody?
     ;
 
 assignment
@@ -429,6 +433,7 @@ TRY: 'try';
 CATCH: 'catch';
 FINALLY: 'finally';
 FOR: 'for';
+USING: 'using';
 RETURN: 'return';
 IS: 'is';
 IN: 'in';
