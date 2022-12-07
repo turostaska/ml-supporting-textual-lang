@@ -149,7 +149,9 @@ class TypeInference(
                 }
 
                 suffix.isMemberNavigationSuffix() -> {
-                    require(receiver !is ClassMethodSymbol && receiver !is ModuleSymbol)
+                    require(receiver !is ClassMethodSymbol && receiver !is ModuleSymbol) {
+                        "For static navigation, please use '::' instead of '.'"
+                    }
 
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
