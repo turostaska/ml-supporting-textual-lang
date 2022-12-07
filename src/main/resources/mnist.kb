@@ -36,8 +36,8 @@ class Net: nn.Module {
 val device = torch::device( if (torch::cuda::is_available()) "cuda" else "cpu" )
 
 val batchSize = 8
-val lr = 0.0005
-val numEpochs = 16
+val lr = 0.00001
+val numEpochs = 8
 
 val transform = transforms::Compose([
     transforms::ToTensor(),
@@ -68,20 +68,30 @@ for ( epoch in 1 .. numEpochs ) {
         val loss = F::nll_loss(output, label)
         loss.backward()
         optimizer.step()
-
-        print("Training epoch ${epoch} ended, loss: ${loss.item()}")
     }
+    print("Training epoch ${epoch} ended.")
 
     model.eval()
-    val testLoss = 0.0
-    // val correct = 0
-    using ( torch.no_grad() ) {
+    var testLoss = 0.0
+    var correct = 0.0
+    using ( torch::no_grad() ) {
         for ( (input, label) in testLoader ) {
             input = input.to(device)
             label = label.to(device)
             
             val output = model(input)
+
+            testLoss = testLoss + F::nll_loss(output, label, reduction="sum").item()
+
+            val pred = output.argmax(dim=1, keepdim=true)
+            correct = correct + pred.eq(label.view_as(pred)).sum().item()
         }
     }
+    testLoss = testLoss / len(testLoader)
+    correct = correct / len(testLoader)
+    print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: {correct}")
 
+    scheduler.step()
 }
+
+torch::save(model.state_dict(), "mnist_cnn.pt")

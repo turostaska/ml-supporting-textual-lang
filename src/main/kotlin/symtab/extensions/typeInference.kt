@@ -110,7 +110,7 @@ class TypeInference(
 
             return when {
                 op1.inferredType == op2.inferredType -> op1.inferredType
-                op1.inferredType in NUMERIC_TYPES && op2.inferredType in NUMERIC_TYPES -> FLOAT
+                op1.inferredType in NUMERIC_TYPES || op2.inferredType in NUMERIC_TYPES -> FLOAT
                 else -> op1.inferredType.classMethods.find { it.name == "__add__" }?.returnType ?:
                     throwError { "Additive operator does not work on '${op1.text}' and '${op2.text}'" }
             }
@@ -155,6 +155,9 @@ class TypeInference(
 
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
+                            if (receiver.type in listOf("Any", "Any?"))
+                                return globalScope.resolveBuiltInType("Any?")!!
+
                             currentScope = currentScope.findClassScope(receiver.type)
                                 ?: globalScope.findClassScope(receiver.type)!!
                             receiver = currentScope.resolveOrThrow(suffixId!!)

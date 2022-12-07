@@ -12,7 +12,7 @@ class UsingStatementNode(
 ): SyntaxTreeNode(parent) {
     override fun toCode(): String {
         return """
-            |when (${ctx.expression().toPythonCode()}):
+            |with (${ctx.expression().toPythonCode()}):
             |    $statementsCode
         """.trimMargin()
     }
