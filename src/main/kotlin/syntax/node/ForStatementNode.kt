@@ -10,16 +10,19 @@ class ForStatementNode(
     parent: SyntaxTreeNode,
     private val ctx: ForStatementContext,
 ): SyntaxTreeNode(parent) {
-    private val loopVariable = ctx.variableDeclaration().simpleIdentifier().text
+    private val loopVariables = ctx.variableDeclaration()?.simpleIdentifier()?.text
+        ?: ctx.multiVariableDeclaration().variableDeclaration().joinToString(prefix = "(", postfix = ")") {
+            it.simpleIdentifier().text
+        }
 
-    private val range = ctx.expression().toPythonCode()
+    private val iterable = ctx.expression().toPythonCode()
 
     private val statementsCode get() = if (this.children.any())
         this.children.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() }
     else "pass"
 
     override fun toCode(): String = """
-        |for $loopVariable in ($range):
+        |for $loopVariables in ($iterable):
         |    $statementsCode
     """.trimMargin()
 

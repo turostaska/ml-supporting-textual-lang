@@ -56,5 +56,11 @@ val optimizer = Adam(model.parameters(), lr=lr)
 val scheduler = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)
 
 for ( epoch in 1 .. numEpochs) {
-    print("Epoch ${i}")
+    print("Epoch ${epoch}")
+    model.train()
+
+    for( (input, label) in trainLoader ) {
+        input = input.to(device)
+        label = label.to(device)
+    }
 }

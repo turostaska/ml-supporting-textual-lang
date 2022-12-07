@@ -52,6 +52,8 @@ class ImportedLibVisitor(
             field = value
         }
 
+    private val globalScope get() = symtabBuilder.globalScope
+
     init {
         // println("Visited module '$currentModuleName'")
 
@@ -136,6 +138,14 @@ class ImportedLibVisitor(
             }
         } catch (_: RuntimeException) {}
 
+        try {
+            if (className in SPECIAL_IMPORT_METHOD_SYMBOLS_TO_CLASS.keys) {
+                SPECIAL_IMPORT_METHOD_SYMBOLS_TO_CLASS[className]!!.forEach { methodSymbol ->
+                    currentScope.add(methodSymbol)
+                }
+            }
+        } catch (_: RuntimeException) {}
+
         currentScope = ClassDeclarationScope(currentScope, typeSymbol)
         currentScope.addAll(
             *superTypeSymbols.flatMap { it.classMethods }.toTypedArray(),
@@ -198,4 +208,13 @@ class ImportedLibVisitor(
 
     private val ClassdefContext.hasSuperclass
         get() = this.arglist().argument().map { it.text }.any { it != "object" }
+
+    private val SPECIAL_IMPORT_METHOD_SYMBOLS_TO_CLASS get() = mapOf(
+        "Tensor" to listOf(
+            MethodSymbol("to",
+                currentScope.resolveType("Tensor")!!,
+                mapOf("any" to listOf(globalScope.resolveType("Any?")!!))
+            ),
+        ),
+    )
 }

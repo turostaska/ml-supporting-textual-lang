@@ -45,6 +45,9 @@ open class Scope(
     fun resolveType(name: String): TypeSymbol? {
         return if ("." !in name)
             symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
+                ?: children.filterIsInstance<ModuleScope>().asSequence().map {
+                    it.resolveTypeLocally(name)
+                }.firstOrNull { it != null }
                 ?: this.parent?.resolveType(name)
         else {
             val (module, name) = name.splitOnFirst(".")
@@ -64,6 +67,9 @@ open class Scope(
 
     fun resolveVariableLocally(name: String): VariableSymbol? =
         symbols.findLast { it.name == name && it is VariableSymbol } as? VariableSymbol
+
+    fun resolveTypeLocally(name: String): TypeSymbol? =
+        symbols.findLast { it.name == name && it is TypeSymbol } as? TypeSymbol
 
     fun resolve(name: String): Symbol? {
         return if ("." !in name)
@@ -85,6 +91,9 @@ open class Scope(
 
     fun findClassScope(name: String): ClassDeclarationScope? =
         children.findLast { it is ClassDeclarationScope && it.className == name } as? ClassDeclarationScope
+            ?: children.filterIsInstance<ModuleScope>().asSequence().map {
+                it.findClassScope(name)
+            }.firstOrNull { it != null }
 
     fun add(symbol: Symbol) {
         symbols += when (symbol) {

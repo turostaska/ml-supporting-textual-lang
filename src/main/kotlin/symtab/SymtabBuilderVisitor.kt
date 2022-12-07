@@ -186,19 +186,36 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         super.visitImportHeader(this)
     }
 
-    override fun visitForStatement(ctx: ForStatementContext): Unit = ctx.run {
-        val range = this.expression()
-        val loopVariable = ctx.variableDeclaration().simpleIdentifier().text
+    private val iterables get() = listOfNotNull(
+        globalScope.resolveBuiltInType("Range"),
+        globalScope.resolveBuiltInType("List"),
+        currentScope.resolveType("DataLoader"),
+    )
 
-        require(range.inferredType == globalScope.resolveBuiltInType("Range")) {
-            "A for loop needs a range expression."
+    override fun visitForStatement(ctx: ForStatementContext): Unit = ctx.run {
+        val iterable = this.expression()
+        val loopVariables = ctx.variableDeclaration()?.simpleIdentifier()?.text?.let(::listOf)
+            ?: ctx.multiVariableDeclaration().variableDeclaration().map {
+                it.simpleIdentifier().text
+            }
+
+        require(iterable.inferredType in iterables) {
+            "A for loop needs an iterable expression."
         }
 
         currentScope = Scope(currentScope, name = "For loop")
-        // Add loop variable to the for statement's scope
-        currentScope.add(
-            VariableSymbol(loopVariable, globalScope.resolveBuiltInType("Int")!!, Mutability.VAR)
-        )
+        // Add loop variables to the for statement's scope
+        loopVariables.forEach { loopVariable ->
+            val typeSymbol = when (iterable.inferredType) {
+                globalScope.resolveBuiltInType("Range") -> globalScope.resolveBuiltInType("Int")!!
+                currentScope.resolveType("DataLoader") -> globalScope.resolveType("torch.Tensor")!!
+                else -> globalScope.resolveBuiltInType("Any?")!!
+            }
+
+            currentScope.add(
+                VariableSymbol(loopVariable, typeSymbol, Mutability.VAR)
+            )
+        }
         super.visitControlStructureBody(this.controlStructureBody())
         currentScope = currentScope.parent!!
     }

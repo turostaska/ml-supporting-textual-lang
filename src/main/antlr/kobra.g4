@@ -44,6 +44,10 @@ variableDeclaration
     : simpleIdentifier (NL* COLON NL* type)?
     ;
 
+multiVariableDeclaration
+    : LPAREN NL* variableDeclaration (NL* COMMA NL* variableDeclaration)* (NL* COMMA)? NL* RPAREN
+    ;
+
 functionBody
     : block
     | ASSIGNMENT NL* expression
@@ -68,7 +72,7 @@ loopStatement
     ;
 
 forStatement
-    : FOR NL* LPAREN variableDeclaration IN expression RPAREN NL* controlStructureBody?
+    : FOR NL* LPAREN (variableDeclaration | multiVariableDeclaration )IN expression RPAREN NL* controlStructureBody?
     ;
 
 assignment

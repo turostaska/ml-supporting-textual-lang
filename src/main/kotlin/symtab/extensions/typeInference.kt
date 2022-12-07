@@ -153,7 +153,8 @@ class TypeInference(
 
                     when(receiver) {
                         is VariableSymbol, is ClassMethodSymbol -> {
-                            currentScope = currentScope.findClassScope(receiver.type)!!
+                            currentScope = currentScope.findClassScope(receiver.type)
+                                ?: globalScope.findClassScope(receiver.type)!!
                             receiver = currentScope.resolveOrThrow(suffixId!!)
                         }
                         is TypeSymbol -> {
