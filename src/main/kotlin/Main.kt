@@ -7,7 +7,6 @@ import symtab.SymtabBuilderVisitor
 import syntax.SyntaxTreeBuilderVisitor
 import syntax.generateCode
 import util.Resources
-import util.runPythonScript
 
 val symtabBuilder = SymtabBuilderVisitor()
 
@@ -25,6 +24,5 @@ fun main() {
         it.visit(program)
     }
 
-    val pythonCode = syntaxTreeBuilder.generateCode().also(::println)
-    pythonCode.runPythonScript()
+    syntaxTreeBuilder.generateCode().also(::println)
 }

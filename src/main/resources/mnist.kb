@@ -68,5 +68,7 @@ for ( epoch in 1 .. numEpochs ) {
         val loss = F::nll_loss(output, label)
         loss.backward()
         optimizer.step()
+
+        print("Training epoch ${epoch} ended, loss: ${loss.item()}")
     }
 }

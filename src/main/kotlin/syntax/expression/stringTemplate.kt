@@ -7,11 +7,12 @@ fun toPythonFormatString(str: String): String {
     val parts = str.split(TEMPLATE_REGEX)
     val identifiers = str.split(*parts.filter { it.isNotBlank() }.toTypedArray())
         .map { it.removePrefix("\$") }
+        .filter { it.isNotBlank() }
 
     val sb = StringBuilder("f\"")
     parts.forEachIndexed { i, part ->
         sb.append(part)
-        sb.append(identifiers[i])
+        sb.append(identifiers.getOrNull(i).orEmpty())
     }
     sb.append("\"")
 
