@@ -178,7 +178,7 @@ class TypeInference(
                         it.simpleIdentifier()?.text
                     } ?: emptyList()
                     require( args.all { it in methodSymbol.params.keys } ) {
-                        "Invalid argument name, please verify. The named arguments were $args"
+                        "Invalid argument name, please verify. The named arguments were $args. '${this.text}'"
                     }
 
                     return methodSymbol.returnType ?: UNIT

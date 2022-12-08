@@ -113,7 +113,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
         // if type symbol has forward function defined, a method should be added to the scope as well
         typeSymbol.forwardFunction()?.let { forwardFunction ->
-            currentScope += MethodSymbol(name, forwardFunction.returnType, forwardFunction.params)
+            val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
+            currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(tensorTypeSymbol)))
         }
 
         super.visitPropertyDeclaration(this)

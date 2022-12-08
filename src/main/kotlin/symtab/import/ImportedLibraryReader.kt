@@ -18,7 +18,10 @@ const val GLOBAL_SITE_PACKAGES_PATH = "/usr/lib/python3.10/site-packages"
 const val LOCAL_SITE_PACKAGES_PATH = "/home/rado/.local/lib/python3.10/site-packages"
 const val LOCAL_VS_CODE_PACKAGES_PATH = "/home/rado/.vscode/extensions/ms-python.vscode-pylance-2022.10.30/dist/typeshed-fallback/stdlib"
 
-val SITE_PACKAGE_DIRS = listOf(GLOBAL_SITE_PACKAGES_PATH, LOCAL_SITE_PACKAGES_PATH)
+val SITE_PACKAGE_DIRS = listOf(
+    LOCAL_SITE_PACKAGES_PATH,
+    GLOBAL_SITE_PACKAGES_PATH,
+)
 
 fun findSubmoduleInFolder(folder: String, submoduleName: String): String {
     return File("$folder/$submoduleName.py").pathIfExistsElseNull()
@@ -76,17 +79,17 @@ private fun getSourceOfPackageOrNull(
 ): String? {
     val packageName = (parentModules.joinToString("/", postfix = "/") + moduleName).removePrefix("/")
 
-    return "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull) ?:
-    "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::readOrNull) ?:
-    SITE_PACKAGE_DIRS.map { dir ->
-        "$dir/$packageName/__init__.pyi".let(Resources::readOrNull) ?:
-        "$dir/$packageName/__init__.py".let(Resources::readOrNull) ?:
-        "$dir/$packageName.pyi".let(Resources::readOrNull) ?:
-        "$dir/$packageName.py".let(Resources::readOrNull)
-    }.find { it != null } ?:
-    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::readOrNull) ?:
-    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull) ?:
-    "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::readOrNull)
+    return "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.pyi".let(Resources::readOrNull)
+        ?: "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull)
+        ?: "$LOCAL_VS_CODE_PACKAGES_PATH/$packageName/__init__.pyi".let(Resources::readOrNull)
+        ?: SITE_PACKAGE_DIRS.asSequence().map { dir ->
+            "$dir/$packageName.py".let(Resources::readOrNull) ?:
+            "$dir/$packageName.pyi".let(Resources::readOrNull) ?:
+            "$dir/$packageName/__init__.pyi".let(Resources::readOrNull) ?:
+            "$dir/$packageName/__init__.py".let(Resources::readOrNull)
+        }.firstOrNull { it != null }
+        ?: "$GLOBAL_PACKAGES_PATH/$packageName.py".let(Resources::readOrNull)
+        ?: "$GLOBAL_PACKAGES_PATH/$packageName/__init__.py".let(Resources::readOrNull)
 }
 
 private val visitedModules = mutableSetOf<String>()

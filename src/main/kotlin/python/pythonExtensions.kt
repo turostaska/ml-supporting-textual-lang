@@ -48,6 +48,7 @@ val FuncdefContext.parameterNamesToTypeNameMap: Map<String, List<String>>
         ?.mapValues {
             it.value.let { typeNamesPy ->
                 typeNamesPy?.mapNotNull { typeNamePy -> typeNamePy?.toKobraTypeNameOrAny() }
+                    ?: listOf("Any")
             }
         }?.filterNonNull() ?: emptyMap()
 

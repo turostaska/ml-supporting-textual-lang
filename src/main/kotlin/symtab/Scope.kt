@@ -5,6 +5,7 @@ import com.kobra.kobraParser.UsingStatementContext
 import symtab.Scope.Serial.serial
 import type.nullableVariant
 import util.splitOnFirst
+import util.splitOnLast
 import util.throwError
 
 open class Scope(
@@ -16,6 +17,8 @@ open class Scope(
     init {
         parent?.children?.add(this)
     }
+
+    private val globalScope: Scope = if (this.parent == null) this else this.parent.globalScope
 
     fun getForStatementScope(
         ctx: ForStatementContext,
@@ -60,8 +63,9 @@ open class Scope(
                 }.firstOrNull { it != null }
                 ?: this.parent?.resolveType(name)
         else {
-            val (module, name) = name.splitOnFirst(".")
+            val (module, name) = name.splitOnLast(".")
             val moduleSymbol = findModuleOrClassScope(module)
+                ?: globalScope.findModuleOrClassScope(module)
                 // ?: throwError { "Can't resolve $name: module or class $module not found" }
                 ?: return null
             moduleSymbol.resolveType(name)
@@ -95,7 +99,7 @@ open class Scope(
 
     fun findModuleOrClassScope(name: String): Scope? =
         children.findLast {
-            it is ModuleScope && it.importAlias == name ||
+            it is ModuleScope && it.importAlias == name || it is ModuleScope && it.moduleName == name ||
             it is ClassDeclarationScope && it.className == name
         } ?: parent?.findModuleOrClassScope(name)
 

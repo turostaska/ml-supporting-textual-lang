@@ -18,7 +18,7 @@ import util.secondOrNull
 // működjön nem rekurzívan, utána lehet szórakozni
 
 private val SPECIAL_IMPORT_AS = mapOf(
-    "max_pool2d_with_indices" to "max_pool2d",
+    "_max_pool2d" to "max_pool2d",
 )
 
 private val SPECIAL_IMPORT = listOf(
@@ -45,6 +45,18 @@ class ImportedLibVisitor(
     symbolsToImportAs: Map<String, String>? = null,
 ): Python3ParserBaseVisitor<Unit>() {
     private val symbolsToImportAs = symbolsToImportAs?.toMutableMap() ?: mutableMapOf()
+
+    private val parentModules: List<String> = currentModuleName.let {
+        val result = mutableListOf(it)
+        var currentModule = it
+
+        do {
+            currentModule = currentModule.substringBeforeLast(".")
+            result += currentModule
+        } while (currentModule != it.substringBefore("."))
+
+        result
+    }
 
     private var currentScope = symtabBuilder.currentScope
         set(value) {
@@ -125,6 +137,8 @@ class ImportedLibVisitor(
         val declaredType = typeHierarchy.addType(className, classNamePy, superClasses.toSet())
         val typeSymbol = TypeSymbol(className, declaredType)
 
+        if (className == "Tensor") typeSymbol.pythonSymbolName = "torch.Tensor"
+
         try {
             currentScope.addType(typeSymbol)
 
@@ -176,7 +190,10 @@ class ImportedLibVisitor(
             else functionName
 
         // todo: If return value is of unknown type, let's just replace it with Any for now
-        val returnType = currentScope.resolveType(returnTypeName) ?: currentScope.ANY
+        val returnType = currentScope.resolveType(returnTypeName)
+            ?: globalScope.resolveType(returnTypeName)
+            ?: parentModules.asSequence().map { globalScope.resolveType("$it.$returnTypeName") }.firstOrNull { it != null }
+            ?: currentScope.ANY
 
         // Some function headers may be identical since some types are not mapped yet and are substituted by 'Any?'.
         // If the type symbol can't be added, we should continue.

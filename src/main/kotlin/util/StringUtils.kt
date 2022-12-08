@@ -25,3 +25,12 @@ fun String.splitOnFirst(delimiter: String): Pair<String, String> {
 
     return before to after
 }
+
+fun String.splitOnLast(delimiter: String): Pair<String, String> {
+    require(delimiter in this)
+
+    val before = this.substringBeforeLast(delimiter)
+    val after = this.substringAfterLast(delimiter)
+
+    return before to after
+}

@@ -1,6 +1,6 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torch.utils.data.DataLoader as DataLoader
@@ -15,7 +15,7 @@ class Net: nn.Module {
     val fc1 = nn::Linear(9216, 128)
     val fc2 = nn::Linear(128, 10)
 
-    override fun forward(input: Any): Any {
+    override fun forward(input: Tensor): Tensor {
         var x = input
         x = conv1(x)
         x = F::relu(x)

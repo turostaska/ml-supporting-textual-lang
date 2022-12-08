@@ -11,7 +11,7 @@ class FunctionDeclarationNode(
 ): SyntaxTreeNode(parent) {
     private val functionName = methodSymbol.pythonSymbolName
     private val returnTypeName = methodSymbol.returnTypeName
-    private val returnTypeNamePy = methodSymbol.returnType?.referencedType?.pythonName ?: returnTypeName
+    private val returnTypeNamePy = methodSymbol.returnType?.pythonSymbolName ?: returnTypeName
     private val params = methodSymbol.params
     private val isClassMethod = parent is ClassDeclarationNode
 
@@ -28,7 +28,7 @@ class FunctionDeclarationNode(
     private val selfParam = if (isClassMethod) "self," else ""
 
     private val paramsToCode
-        get() = params.map { (k, v) -> "$k: ${v.first().referencedType.pythonName}" }.joinToString()
+        get() = params.map { (k, v) -> "$k: ${v.first().pythonSymbolName}" }.joinToString()
 
     private val statementsToCode
         get() = if (children.any()) children.joinToCodeWithTabToAllLinesButFirst(1) { it.toCode() } else "pass"
