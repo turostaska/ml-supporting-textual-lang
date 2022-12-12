@@ -89,7 +89,7 @@ for ( epoch in 1 .. numEpochs ) {
     }
     testLoss = testLoss / len(testLoader)
     correct = correct / len(testLoader)
-    print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: {correct}")
+    print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: ${correct}")
 
     scheduler.step()
 }
