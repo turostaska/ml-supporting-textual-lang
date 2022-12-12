@@ -23,7 +23,9 @@ private val SPECIAL_IMPORT_AS = mapOf(
 
 private val SPECIAL_IMPORT = listOf(
     "torch.device",
+    "torch.optim.Optimizer",
     "torch.optim.Adam",
+    "torch.optim.lr_scheduler._LRScheduler",
     "torch.optim.lr_scheduler.StepLR",
 )
 
@@ -199,6 +201,8 @@ class ImportedLibVisitor(
         // If the type symbol can't be added, we should continue.
         try {
             currentScope += (currentScope as? ClassDeclarationScope)?.let {
+                val returnType = if (it.typeSymbol.name == "Module" && functionName == "to")
+                    it.typeSymbol else returnType
                 ClassMethodSymbol(functionName, returnType, params, it.typeSymbol)
             } ?: MethodSymbol(functionName, returnType, params)
         } catch (e: RuntimeException) {
@@ -231,6 +235,12 @@ class ImportedLibVisitor(
             MethodSymbol("to",
                 currentScope.resolveType("Tensor")!!,
                 mapOf("any" to listOf(globalScope.resolveType("Any?")!!))
+            ),
+        ),
+        "Module" to listOf(
+            MethodSymbol("forward",
+                currentScope.resolveType("Tensor")!!,
+                mapOf("any" to listOf(globalScope.resolveType("Tensor")!!))
             ),
         ),
     )

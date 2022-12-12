@@ -5,7 +5,54 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torch.utils.data.DataLoader as DataLoader
 import torch.optim.Adam as Adam
+import torch.optim.Optimizer as Optimizer
 import torch.optim.lr_scheduler as lrScheduler
+
+
+class KModule(
+    val trainLoader: DataLoader,
+    val testLoader: DataLoader,
+    model: Module,
+    val numEpochs: Int = 8,
+    val lr: Float = 0.00001,
+) {
+    val device: Device = torch::device( if (torch::cuda::is_available()) "cuda" else "cpu" )
+    val net: Module = model.to(this.device)
+
+    fun lossFunction(output: Tensor, label: Tensor): Tensor  // todo: compilation error, ha nincs felüldefiniálva
+    fun createOptimizer(): Optimizer
+    fun createScheduler(): Any? = null
+
+    val optimizer = this.createOptimizer()
+    val scheduler = this.createScheduler()
+
+    fun doTrainEpoch(epoch: Int) {
+        print("Epoch ${epoch}")
+        this.train()
+
+        for ( (input, label) in this.trainLoader ) {
+            input = input.to(device)
+            label = label.to(device)
+
+            val output = this(input)
+
+            val loss = this.lossFunction(output, label)
+            loss.backward()
+            this.optimizer.step()
+        }
+        print("Training epoch ${epoch} ended.")
+    }
+
+    fun doEvalEpoch(epoch: Int)
+
+    fun doTrain() {
+        for ( epoch in 1 .. numEpochs ) {
+            doTrainEpoch(epoch)
+            doEvalEpoch(epoch)
+        }
+    }
+}
+
 
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
@@ -33,8 +80,6 @@ class Net: nn.Module {
     }
 }
 
-val device = torch::device( if (torch::cuda::is_available()) "cuda" else "cpu" )
-
 val batchSize = 8
 val lr = 0.00001
 val numEpochs = 8
@@ -50,48 +95,46 @@ val dsTest  = datasets::MNIST("./data", train=false, transform=transform)
 val trainLoader = DataLoader(dsTrain, batch_size = batchSize)
 val testLoader = DataLoader(dsTest, batch_size = 1)
 
-val model = Net().to(device)
-val optimizer = Adam(model.parameters(), lr=lr)
+class NetTrainer(
+    trainLoader: DataLoader,
+    testLoader: DataLoader,
+    net: Module,
+    numEpochs: Int,
+    lr: Float,
+): KModule(trainLoader, testLoader, net, numEpochs, lr) {
+    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum")
+    override fun createOptimizer(): Optimizer = Adam(this.net.parameters(), lr=this.lr)
+    override fun createScheduler(): Any? = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)
 
-val scheduler = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)
+    override fun doEvalEpoch(epoch: Int) {
+        this.net.eval()
+        var testLoss = 0.0
+        var correct = 0.0
+        using ( torch::no_grad() ) {
+            for ( (input, label) in this.testLoader ) {
+                input = input.to(this.device)
+                label = label.to(this.device)
 
-for ( epoch in 1 .. numEpochs ) {
-    print("Epoch ${epoch}")
-    model.train()
+                val output = this.net(input)
 
-    for ( (input, label) in trainLoader ) {
-        input = input.to(device)
-        label = label.to(device)
+                testLoss = testLoss + this.lossFunction(output, label).item()
 
-        val output = model(input)
-
-        val loss = F::nll_loss(output, label)
-        loss.backward()
-        optimizer.step()
-    }
-    print("Training epoch ${epoch} ended.")
-
-    model.eval()
-    var testLoss = 0.0
-    var correct = 0.0
-    using ( torch::no_grad() ) {
-        for ( (input, label) in testLoader ) {
-            input = input.to(device)
-            label = label.to(device)
-            
-            val output = model(input)
-
-            testLoss = testLoss + F::nll_loss(output, label, reduction="sum").item()
-
-            val pred = output.argmax(dim=1, keepdim=true)
-            correct = correct + pred.eq(label.view_as(pred)).sum().item()
+                val pred = output.argmax(dim=1, keepdim=true)
+                correct = correct + pred.eq(label.view_as(pred)).sum().item()
+            }
         }
-    }
-    testLoss = testLoss / len(testLoader)
-    correct = correct / len(testLoader)
-    print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: ${correct}")
+        testLoss = testLoss / len(this.testLoader)
+        correct = correct / len(this.testLoader)
+        print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: ${correct}")
 
-    scheduler.step()
+        this.scheduler.step()
+    }
 }
 
-torch::save(model.state_dict(), "mnist_cnn.pt")
+NetTrainer(
+    trainLoader,
+    testLoader,
+    Net(),
+    numEpochs,
+    lr,
+).doTrain()

@@ -28,8 +28,8 @@ propertyDeclaration
     : (VAL | VAR) simpleIdentifier (COLON NL* type)? (NL* (ASSIGNMENT NL* expression))?
     ;
 
-functionDeclaration // todo: modifiers
-    : functionModifiers? FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
+functionDeclaration
+    : functionModifiers? FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody?
     ;
 
 functionModifiers
@@ -94,7 +94,7 @@ block
 // SECTION: classes
 
 classDeclaration
-    : CLASS simpleIdentifier (primaryConstructor?)
+    : CLASS NL* simpleIdentifier (NL* primaryConstructor)?
     (COLON delegationSpecifiers)?
     (NL* classBody)?
     ;
@@ -388,7 +388,12 @@ semi
 
 memberAccessOperator
     : NL* DOT
+    | NL* safeNav
     | COLONCOLON
+    ;
+
+safeNav
+    : QUEST_NO_WS DOT
     ;
 
 semis

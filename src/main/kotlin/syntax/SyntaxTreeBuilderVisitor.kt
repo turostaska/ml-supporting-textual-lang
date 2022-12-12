@@ -88,7 +88,6 @@ class SyntaxTreeBuilderVisitor(
         } else {
             // todo: constructor parameter
         }
-        super.visitClassParameter(this)
     }
 
     override fun visitFunctionDeclaration(ctx: kobraParser.FunctionDeclarationContext): Unit = ctx.run {

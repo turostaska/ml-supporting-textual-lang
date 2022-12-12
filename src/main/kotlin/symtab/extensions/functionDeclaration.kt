@@ -23,5 +23,9 @@ val FunctionDeclarationContext.returnTypeNameOrNull
 val FunctionDeclarationContext.returnTypeName
     get() = returnTypeNameOrNull ?: TypeNames.UNIT
 
-val FunctionDeclarationContext.statements: List<StatementContext>
-    get() = functionBody().block().statements().statement()
+val FunctionDeclarationContext.statements: List<StatementContext>?
+    get() = functionBody()?.block()?.statements()?.statement()
+
+val FunctionDeclarationContext.lastStatementIsReturn: Boolean
+    get() = (this.statements?.lastOrNull()?.isReturnStatement)
+        ?: (this.functionBody()?.ASSIGNMENT() != null)

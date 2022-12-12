@@ -4,7 +4,10 @@ import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser.*
 import symtab.extensions.*
 import symtab.import.ImportedLibraryReader
-import type.*
+import type.BuiltInTypes
+import type.Type
+import type.TypeHierarchy
+import type.UNIT
 import type.util.contains
 import type.util.find
 import type.util.findInSubtree
@@ -86,7 +89,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (isNotMember) {
             // We are in constructor scope, so we add the symbol to the symtab
             // todo: assert type of scope
-            currentScope += VariableSymbol(name, typeSymbol, Mutability.VAL)
+            currentScope.parent!! += VariableSymbol(name, typeSymbol, Mutability.VAL)
         } else {
             // A class member, we add it to the class scope
             currentScope.parent!! += VariableSymbol(name, typeSymbol, this.mutability.getAsMutability(), true)
@@ -112,9 +115,12 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         )
 
         // if type symbol has forward function defined, a method should be added to the scope as well
-        typeSymbol.forwardFunction()?.let { forwardFunction ->
+        if (typeSymbol.forwardFunction() != null){
             val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
             currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(tensorTypeSymbol)))
+        } else if (typeSymbol.name == "Module") {
+            val moduleTypeSymbol = globalScope.resolveTypeOrThrow("nn.Module")
+            currentScope += MethodSymbol(name, moduleTypeSymbol, mapOf("input" to listOf(globalScope.resolveType("Any?")!!)))
         }
 
         super.visitPropertyDeclaration(this)
@@ -137,20 +143,24 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     }
 
     override fun visitFunctionDeclaration(ctx: FunctionDeclarationContext): Unit = ctx.run {
-        require(currentScope.resolveMethodLocally(functionName) == null) {
+        require(currentScope.resolveMethodLocally(functionName) == null
+                || this.functionModifiers().functionModifier().any { it.OVERRIDE() != null }) {
             "Redeclaration of method '$functionName' in scope '${currentScope.name}'"
         }
 
         val returnType = currentScope.resolveTypeOrThrow(returnTypeName)
-        require(statements.lastOrNull()?.isReturnStatement == true || returnType == globalScope.UNIT) {
+        require(this.lastStatementIsReturn || this.functionBody() == null || returnType == globalScope.UNIT) {
             "Last statement must be return OR return type must be Unit"
         }
 
         if (this.functionModifiers()?.functionModifier()?.any { it.OVERRIDE() != null } == true) {
             (currentScope as? ClassDeclarationScope)
                 ?: throwError { "Override modifier on a method that doesn't belong to a class" }
-            require(currentScope.resolveType(functionName) != null
-                || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name == "Module" }
+//            require(currentScope.resolveType(functionName) != null
+//                || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name in listOf("Module", "KModule") }
+//                    && functionName in listOf ("forward", "lossFunction", "doTrainEpoch", "doEvalEpoch", "doTrain")))
+            require(currentScope.resolveType(functionName) != null || currentScope.resolveMethod(functionName) != null
+                || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name in listOf("Module", "KModule") }
                     && functionName == "forward"))
         }
 
@@ -241,6 +251,4 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     private val ExpressionContext.inferredType get() = typeInference.inferType(this)
 
-    private val FunctionDeclarationContext.returnTypeNameOfLastStatement
-        get() = statements.lastOrNull()?.expression()?.let { typeInference.inferType(it) } ?: TypeNames.UNIT
 }

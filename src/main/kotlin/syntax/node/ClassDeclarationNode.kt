@@ -21,7 +21,7 @@ class ClassDeclarationNode(
     private val constructorParameterMembers get() = members.filter { it.isConstructorParameter }
     private val nonConstructorParameterMembers get() = members.filter { !it.isConstructorParameter }
     private val constructorParameters = ctx.primaryConstructor()?.classParameters()?.classParameter()?.map {
-        it.simpleIdentifier().text
+        it.simpleIdentifier().text + it.expression()?.toPythonCode()?.let { default -> "=$default" }.orEmpty()
     } ?: emptyList()
 
     private val classMethodNodes get() = children.filterIsInstance<FunctionDeclarationNode>()

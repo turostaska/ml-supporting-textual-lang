@@ -228,11 +228,11 @@ class ModuleScope(
 class ForStatementScope(
     parent: Scope?,
     val ctx: ForStatementContext,
-    name: String = "For scope of $ctx",
+    name: String = "For scope of ${ctx.text}",
 ): Scope(parent, name = name)
 
 class UsingStatementScope(
     parent: Scope?,
     val ctx: UsingStatementContext,
-    name: String = "Using scope of $ctx",
+    name: String = "Using scope of ${ctx.text}",
 ): Scope(parent, name = name)

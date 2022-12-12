@@ -106,17 +106,19 @@ class ImportedLibraryReader(
     private val typeHierarchy: TypeHierarchy,
 ) {
     fun readAndAddAllSymbols(packageName: String) {
-        val rootRule = getRootRuleOfPythonPackage(packageName)
+        if (!visitedModules.add(packageName))
+            return
 
-        if (!visitedModules.add(packageName)) return
+        val rootRule = getRootRuleOfPythonPackage(packageName)
 
         ImportedLibVisitor(symtabBuilder, typeHierarchy, packageName).visit(rootRule)
     }
 
     fun readAndAddSpecifiedSymbols(packageName: String, symbolsToImportAs: Map<String, String>) {
-        val rootRule = getRootRuleOfPythonPackage(packageName)
+        if (!visitedModules.add(packageName))
+            return
 
-        if (!visitedModules.add(packageName)) return
+        val rootRule = getRootRuleOfPythonPackage(packageName)
 
         ImportedLibVisitor(symtabBuilder, typeHierarchy, packageName, symbolsToImportAs).visit(rootRule)
     }

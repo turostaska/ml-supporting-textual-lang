@@ -165,7 +165,7 @@ class TypeInference(
                         is TypeSymbol -> {
                             receiver = currentScope.resolveOrThrow(suffixId!!)
                         }
-                        else -> throwError { "Unknown suffix: '${suffix.text}'" }
+                        else -> return globalScope.resolveBuiltInType("Any?")!!
                     }
                 }
 
