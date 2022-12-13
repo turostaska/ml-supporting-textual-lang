@@ -9,51 +9,6 @@ import torch.optim.Optimizer as Optimizer
 import torch.optim.lr_scheduler as lrScheduler
 
 
-class KModule(
-    val trainLoader: DataLoader,
-    val testLoader: DataLoader,
-    model: Module,
-    val numEpochs: Int = 8,
-    val lr: Float = 0.00001,
-) {
-    val device: Device = torch::device( if (torch::cuda::is_available()) "cuda" else "cpu" )
-    val net: Module = model.to(this.device)
-
-    fun lossFunction(output: Tensor, label: Tensor): Tensor  // todo: compilation error, ha nincs felüldefiniálva
-    fun createOptimizer(): Optimizer
-    fun createScheduler(): Any
-
-    val optimizer = this.createOptimizer()
-    val scheduler = this.createScheduler()
-
-    fun doTrainEpoch(epoch: Int) {
-        print("Epoch ${epoch}")
-        this.net.train()
-
-        for ( (input, label) in this.trainLoader ) {
-            input = input.to(this.device)
-            label = label.to(this.device)
-
-            val output = this.net(input)
-
-            val loss = this.lossFunction(output, label)
-            loss.backward()
-            this.optimizer.step()
-        }
-        print("Training epoch ${epoch} ended.")
-    }
-
-    fun doEvalEpoch(epoch: Int)
-
-    fun doTrain() {
-        for ( epoch in 1 .. this.numEpochs ) {
-            this.doTrainEpoch(epoch)
-            this.doEvalEpoch(epoch)
-        }
-    }
-}
-
-
 class Net: nn.Module {
     val conv1 = nn::Conv2d(1, 32, 3, 1)
     val conv2 = nn::Conv2d(32, 64, 3, 1)

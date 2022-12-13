@@ -10,8 +10,10 @@ import util.Resources
 
 val symtabBuilder = SymtabBuilderVisitor()
 
+private val readKModule = true
+
 fun main() {
-    val code = Resources.read("mnist.kb")
+    val code = Resources.read("mnist.kb", readKModule)
     val lexer = kobraLexer(CharStreams.fromString(code))
     val tokens = CommonTokenStream(lexer)
     val program = kobraParser(tokens).program()
