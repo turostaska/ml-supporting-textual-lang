@@ -78,8 +78,8 @@ class NetTrainer(
                 correct = correct + pred.eq(label.view_as(pred)).sum().item()
             }
         }
-        testLoss = testLoss / len(this.testLoader)
-        correct = correct / len(this.testLoader)
+        testLoss = testLoss / this.testLoader.size()
+        correct = correct / this.testLoader.size()
         print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: ${correct}")
 
         this.scheduler.step()

@@ -28,8 +28,12 @@ propertyDeclaration
     : (VAL | VAR) simpleIdentifier (COLON NL* type)? (NL* (ASSIGNMENT NL* expression))?
     ;
 
+receiverType
+    : simpleIdentifier
+    ;
+
 functionDeclaration
-    : functionModifiers? FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody?
+    : functionModifiers? FUN (NL* receiverType NL* DOT)? simpleIdentifier functionParameters (COLON NL* type)? functionBody?
     ;
 
 functionModifiers

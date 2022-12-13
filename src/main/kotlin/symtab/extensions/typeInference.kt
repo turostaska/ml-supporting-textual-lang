@@ -159,7 +159,8 @@ class TypeInference(
                                 return globalScope.resolveBuiltInType("Any?")!!
 
                             currentScope = currentScope.findClassScope(receiver.type)
-                                ?: globalScope.findClassScope(receiver.type)!!
+                                ?: globalScope.findClassScope(receiver.type)
+                                ?: globalScope
                             receiver = currentScope.resolveOrThrow(suffixId!!)
                         }
                         is TypeSymbol -> {

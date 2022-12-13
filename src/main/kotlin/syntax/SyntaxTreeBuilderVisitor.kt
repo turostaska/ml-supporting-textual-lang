@@ -9,6 +9,7 @@ import symtab.Scope
 import symtab.extensions.className
 import symtab.extensions.functionName
 import symtab.extensions.isMember
+import symtab.extensions.resolveTypeOrThrow
 import syntax.expression.toPythonCode
 import syntax.node.*
 
@@ -94,8 +95,10 @@ class SyntaxTreeBuilderVisitor(
         // todo: class methods
         val methodSymbol = currentScope.resolveMethod(functionName)!!
         val isOneLiner = this.functionBody()?.ASSIGNMENT() != null
+        val receiverName = this.receiverType()?.simpleIdentifier()?.text
+        val receiver = receiverName?.let { currentScope.resolveTypeOrThrow(receiverName) }
 
-        FunctionDeclarationNode(currentNode, methodSymbol, isOneLiner).let {
+        FunctionDeclarationNode(currentNode, methodSymbol, isOneLiner, receiver).let {
             currentNode = it
         }
         currentScope = currentScope.children.first {

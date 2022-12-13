@@ -13,6 +13,7 @@ class FunctionDeclarationNode(
     parent: SyntaxTreeNode,
     methodSymbol: MethodSymbol,
     private val isOneLiner: Boolean,
+    private val receiver: TypeSymbol? = null,
 ): SyntaxTreeNode(parent) {
     private val functionName = methodSymbol.pythonSymbolName
     private val returnTypeName = methodSymbol.returnType?.name ?: "Unit"
@@ -23,9 +24,12 @@ class FunctionDeclarationNode(
     private val params = methodSymbol.params
     private val isClassMethod = parent is ClassDeclarationNode
 
+    private val receiverParam = receiver?.let { "this: ${it.pythonName()}," }
+
     override fun toCode() = """
         |def $functionName($selfParam $paramsToCode) -> $returnTypeNamePy:
         |    $statementsToCode
+        |$monkeyPatch
     """.trimMargin()
 
     override fun appendCodeTo(sb: StringBuilder, indent: Int) {
@@ -33,10 +37,19 @@ class FunctionDeclarationNode(
         sb.appendLine(System.lineSeparator())
     }
 
+    private val monkeyPatch: String = receiver?.let {
+        "${receiver.pythonName()}.$functionName = $functionName"
+    }.orEmpty()
+
     private val selfParam = if (isClassMethod) "self," else ""
 
-    private val paramsToCode
-        get() = params.map { (k, v) -> "$k: ${v.first().pythonName()}" }.joinToString()
+    private val paramsToCode: String
+        get() {
+            return params
+                .map { (k, v) -> "$k: ${v.first().pythonName()}" }
+                .toMutableList().apply { if (receiverParam != null) add(0, receiverParam) }
+                .joinToString()
+        }
 
     private val statementsToCode
         get() = if (children.any()) {

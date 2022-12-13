@@ -46,7 +46,6 @@ class VariableSymbol(
     override fun toString() = "${mutability.name} $name: $type"
 }
 
-// todo: infix and property methods?
 open class MethodSymbol(
     override val name: String,
     val returnType: TypeSymbol?,
@@ -81,8 +80,36 @@ open class MethodSymbol(
         result = 31 * result + isInfix.hashCode()
         return result
     }
+}
 
+class ExtensionMethodSymbol(
+    name: String,
+    returnType: TypeSymbol?,
+    params: Map<String, List<TypeSymbol>>,
+    val onType: TypeSymbol,
+) : MethodSymbol(name, returnType, params) {
+    override val type: String
+        get() = "$onType.(${
+            params.map { "${it.key}: ${it.value.first().name}" }.joinToString()
+        }) -> ${returnType ?: TypeNames.UNIT}"
 
+    override fun toString() = "fun $onType.$name: $type"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ClassMethodSymbol) return false
+        if (!super.equals(other)) return false
+
+        if (onType != other.onType) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + onType.hashCode()
+        return result
+    }
 }
 
 class ClassMethodSymbol(

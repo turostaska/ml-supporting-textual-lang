@@ -157,6 +157,7 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
         isReturnStatement -> "return ${this.jumpExpression().expression().toPythonCode()}"
         isIfExpression -> this.ifExpression().toPythonCode()
+        this.text == "this" -> "this"
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
 }

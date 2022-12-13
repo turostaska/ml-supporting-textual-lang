@@ -1,3 +1,5 @@
+fun DataLoader.size(): Int = len(this)
+
 class KModule(
     val trainLoader: DataLoader,
     val testLoader: DataLoader,

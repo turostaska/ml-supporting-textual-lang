@@ -10,7 +10,7 @@ import util.Resources
 
 val symtabBuilder = SymtabBuilderVisitor()
 
-private val readKModule = true
+private const val readKModule = true
 
 fun main() {
     val code = Resources.read("mnist.kb", readKModule)

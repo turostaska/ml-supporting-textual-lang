@@ -144,7 +144,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     override fun visitFunctionDeclaration(ctx: FunctionDeclarationContext): Unit = ctx.run {
         require(currentScope.resolveMethodLocally(functionName) == null
-                || this.functionModifiers().functionModifier().any { it.OVERRIDE() != null }) {
+                || this.functionModifiers()?.functionModifier()?.any { it.OVERRIDE() != null } == true) {
             "Redeclaration of method '$functionName' in scope '${currentScope.name}'"
         }
 
@@ -156,16 +156,20 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         if (this.functionModifiers()?.functionModifier()?.any { it.OVERRIDE() != null } == true) {
             (currentScope as? ClassDeclarationScope)
                 ?: throwError { "Override modifier on a method that doesn't belong to a class" }
-//            require(currentScope.resolveType(functionName) != null
-//                || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name in listOf("Module", "KModule") }
-//                    && functionName in listOf ("forward", "lossFunction", "doTrainEpoch", "doEvalEpoch", "doTrain")))
+
             require(currentScope.resolveType(functionName) != null || currentScope.resolveMethod(functionName) != null
                 || ( (currentScope as ClassDeclarationScope).typeSymbol.superTypeSymbols.any { it.name in listOf("Module", "KModule") }
                     && functionName == "forward"))
         }
 
         val params = this.params.mapValues { currentScope.resolveTypeOrThrow(it.value).let(::listOf) }
-        val methodSymbol = MethodSymbol(functionName, returnType, params)
+        val receiverName = this.receiverType()?.simpleIdentifier()?.text
+        val receiver = receiverName?.let { currentScope.resolveTypeOrThrow(receiverName) }
+
+        val methodSymbol = if (receiver == null)
+            MethodSymbol(functionName, returnType, params)
+        else ExtensionMethodSymbol(functionName, returnType, params, receiver)
+
         currentScope += methodSymbol
 
         currentScope = FunctionScope(currentScope, methodSymbol).apply {
