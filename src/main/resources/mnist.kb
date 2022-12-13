@@ -102,7 +102,7 @@ class NetTrainer(
     numEpochs: Int,
     lr: Float,
 ): KModule(trainLoader, testLoader, net, numEpochs, lr) {
-    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum") // todo: one-linereknél hiányzik a return
+    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum")
     override fun createOptimizer(): Optimizer = Adam(this.net.parameters(), lr=this.lr)
     override fun createScheduler(): Any? = lrScheduler::StepLR(this.optimizer, step_size=1, gamma=0.7)
 
