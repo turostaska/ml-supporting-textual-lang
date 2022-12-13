@@ -21,20 +21,20 @@ class KModule(
 
     fun lossFunction(output: Tensor, label: Tensor): Tensor  // todo: compilation error, ha nincs felüldefiniálva
     fun createOptimizer(): Optimizer
-    fun createScheduler(): Any? = null
+    fun createScheduler(): Any
 
     val optimizer = this.createOptimizer()
     val scheduler = this.createScheduler()
 
     fun doTrainEpoch(epoch: Int) {
         print("Epoch ${epoch}")
-        this.train()
+        this.net.train()
 
         for ( (input, label) in this.trainLoader ) {
-            input = input.to(device)
-            label = label.to(device)
+            input = input.to(this.device)
+            label = label.to(this.device)
 
-            val output = this(input)
+            val output = this.net(input)
 
             val loss = this.lossFunction(output, label)
             loss.backward()
@@ -46,9 +46,9 @@ class KModule(
     fun doEvalEpoch(epoch: Int)
 
     fun doTrain() {
-        for ( epoch in 1 .. numEpochs ) {
-            doTrainEpoch(epoch)
-            doEvalEpoch(epoch)
+        for ( epoch in 1 .. this.numEpochs ) {
+            this.doTrainEpoch(epoch)
+            this.doEvalEpoch(epoch)
         }
     }
 }
@@ -102,9 +102,9 @@ class NetTrainer(
     numEpochs: Int,
     lr: Float,
 ): KModule(trainLoader, testLoader, net, numEpochs, lr) {
-    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum")
+    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum") // todo: one-linereknél hiányzik a return
     override fun createOptimizer(): Optimizer = Adam(this.net.parameters(), lr=this.lr)
-    override fun createScheduler(): Any? = lrScheduler::StepLR(optimizer, step_size=1, gamma=0.7)
+    override fun createScheduler(): Any? = lrScheduler::StepLR(this.optimizer, step_size=1, gamma=0.7)
 
     override fun doEvalEpoch(epoch: Int) {
         this.net.eval()

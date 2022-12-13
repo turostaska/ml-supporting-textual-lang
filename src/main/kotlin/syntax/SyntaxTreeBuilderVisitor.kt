@@ -93,8 +93,9 @@ class SyntaxTreeBuilderVisitor(
     override fun visitFunctionDeclaration(ctx: kobraParser.FunctionDeclarationContext): Unit = ctx.run {
         // todo: class methods
         val methodSymbol = currentScope.resolveMethod(functionName)!!
+        val isOneLiner = this.functionBody()?.ASSIGNMENT() != null
 
-        FunctionDeclarationNode(currentNode, methodSymbol).let {
+        FunctionDeclarationNode(currentNode, methodSymbol, isOneLiner).let {
             currentNode = it
         }
         currentScope = currentScope.children.first {
