@@ -7,15 +7,15 @@ import util.second
 fun ExpressionContext.toPythonCode(): String = this.disjunction().toPythonCode()
 
 private fun DisjunctionContext.toPythonCode(): String = if (this.DISJ().any())
-    "${conjunction().first().toPythonCode()} or ${conjunction().second().toPythonCode()}"
+    conjunction().joinToString(" or ") { it.toPythonCode() }
 else this.conjunction().first().toPythonCode()
 
 private fun ConjunctionContext.toPythonCode(): String = if (this.CONJ().any())
-    "${equality().first().toPythonCode()} and ${equality().second().toPythonCode()}"
+    equality().joinToString(" and ") { it.toPythonCode() }
 else this.equality().first().toPythonCode()
 
 private fun EqualityContext.toPythonCode(): String = if (this.equalityOperator().any())
-    "${comparison().first().toPythonCode()} and ${comparison().second().toPythonCode()}"
+    comparison().joinToString(" == ") { it.toPythonCode() }
 else this.comparison().first().toPythonCode()
 
 private fun ComparisonContext.toPythonCode(): String {
