@@ -73,9 +73,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         )
 
         currentScope = PrimaryConstructorScope(currentScope, typeSymbol)
-        super.visitPrimaryConstructor(ctx).also {
-            currentScope = currentScope.parent!!
-        }
+        super.visitPrimaryConstructor(ctx)
+        currentScope = currentScope.parent!!
     }
 
     override fun visitClassParameter(ctx: ClassParameterContext): Unit = ctx.run {
@@ -115,12 +114,11 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         )
 
         // if type symbol has forward function defined, a method should be added to the scope as well
+        val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
         if (typeSymbol.forwardFunction() != null){
-            val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
             currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(tensorTypeSymbol)))
         } else if (typeSymbol.name == "Module") {
-            val moduleTypeSymbol = globalScope.resolveTypeOrThrow("nn.Module")
-            currentScope += MethodSymbol(name, moduleTypeSymbol, mapOf("input" to listOf(globalScope.resolveType("Any?")!!)))
+            currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(globalScope.resolveType("Any?")!!)))
         }
 
         super.visitPropertyDeclaration(this)
@@ -181,7 +179,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
 
     override fun visitJumpExpression(ctx: JumpExpressionContext): Unit = ctx.run {
         check(currentScope is FunctionScope)
-        check((currentScope as FunctionScope).methodSymbol.returnType == this.expression().inferredType)
+        check(((currentScope as FunctionScope).methodSymbol.returnType ?: globalScope.resolveBuiltInType("Unit"))
+                == this.expression().inferredType)
 
         super.visitJumpExpression(this)
     }
