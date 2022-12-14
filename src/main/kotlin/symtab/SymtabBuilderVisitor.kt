@@ -114,10 +114,11 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         )
 
         // if type symbol has forward function defined, a method should be added to the scope as well
-        val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
         if (typeSymbol.forwardFunction() != null){
+            val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
             currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(tensorTypeSymbol)))
         } else if (typeSymbol.name == "Module") {
+            val tensorTypeSymbol = globalScope.resolveTypeOrThrow("torch.Tensor")
             currentScope += MethodSymbol(name, tensorTypeSymbol, mapOf("input" to listOf(globalScope.resolveType("Any?")!!)))
         }
 
@@ -165,7 +166,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
         val receiver = receiverName?.let { currentScope.resolveTypeOrThrow(receiverName) }
 
         val methodSymbol = if (receiver == null)
-            MethodSymbol(functionName, returnType, params)
+                MethodSymbol(functionName, returnType, params)
         else ExtensionMethodSymbol(functionName, returnType, params, receiver)
 
         currentScope += methodSymbol
@@ -180,7 +181,7 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     override fun visitJumpExpression(ctx: JumpExpressionContext): Unit = ctx.run {
         check(currentScope is FunctionScope)
         check(((currentScope as FunctionScope).methodSymbol.returnType ?: globalScope.resolveBuiltInType("Unit"))
-                == this.expression().inferredType)
+            ?.isSubtypeOf(this.expression().inferredType) == true)
 
         super.visitJumpExpression(this)
     }
@@ -250,7 +251,8 @@ class SymtabBuilderVisitor: kobraBaseVisitor<Unit>() {
     private fun Type.subtypeOf(other: Type) =
         typeHierarchy.find(other)!!.findInSubtree(this) != null
 
-    private fun TypeSymbol.isNotSubtypeOf(other: TypeSymbol) = !this.referencedType.subtypeOf(other.referencedType)
+    private fun TypeSymbol.isSubtypeOf(other: TypeSymbol) = this.referencedType.subtypeOf(other.referencedType)
+    private fun TypeSymbol.isNotSubtypeOf(other: TypeSymbol) = !this.isSubtypeOf(other)
 
     private val ExpressionContext.inferredType get() = typeInference.inferType(this)
 

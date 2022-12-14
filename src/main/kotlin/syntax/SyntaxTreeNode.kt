@@ -21,7 +21,7 @@ abstract class SyntaxTreeNode(
 
     open fun appendCodeTo(sb: StringBuilder, indent: Int = 0) {
         sb.append(this.toCode().prependTab(indent))
-        sb.appendLine(System.lineSeparator())
+        sb.appendLine()
 
         this._children.forEach {
             it.appendCodeTo(sb, indent + 1)
