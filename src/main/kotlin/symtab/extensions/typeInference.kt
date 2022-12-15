@@ -46,7 +46,7 @@ class TypeInference(
 
     private val kobraParser.EqualityContext.inferredType: TypeSymbol
         get() = if (this.equalityOperator().any()) {
-            require(this.comparison().first().inferredType == BOOLEAN && this.comparison().second().inferredType == BOOLEAN)
+//            require(this.comparison().first().inferredType == BOOLEAN && this.comparison().second().inferredType == BOOLEAN)
             BOOLEAN
         } else this.comparison().first().inferredType
 
