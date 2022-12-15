@@ -21,7 +21,7 @@ tasks.generateGrammarSource {
     source = project.objects
         .sourceDirectorySet("antlr", "antlr")
         .srcDir("src/main/antlr").apply {
-            include("kobra.g4")
+            include("kobra.g4", "Python3Parser.g4", "Python3Lexer.g4")
         }
     maxHeapSize = "64m"
     outputDirectory = File(outputPath)

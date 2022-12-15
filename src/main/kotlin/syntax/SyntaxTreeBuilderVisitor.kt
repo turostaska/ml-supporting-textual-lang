@@ -2,24 +2,24 @@ package syntax
 
 import com.kobra.kobraBaseVisitor
 import com.kobra.kobraParser
+import symtab.ClassDeclarationScope
+import symtab.FunctionScope
+import symtab.PrimaryConstructorScope
 import symtab.Scope
 import symtab.extensions.className
+import symtab.extensions.functionName
 import symtab.extensions.isMember
-import syntax.node.AssignmentNode
-import syntax.node.ClassDeclarationNode
-import syntax.node.ClassPropertyDeclarationNode
-import syntax.node.PropertyDeclarationNode
-import type.TypeHierarchy
-import type.util.find
+import symtab.extensions.resolveTypeOrThrow
+import syntax.expression.toPythonCode
+import syntax.node.*
 
 // feltételezzük, hogy az ast helyes
 class SyntaxTreeBuilderVisitor(
     private val globalScope: Scope,
-    private val typeHierarchy: TypeHierarchy,
 ): kobraBaseVisitor<Unit>() {
     val syntaxTree = SyntaxTree()
     private lateinit var currentNode: SyntaxTreeNode
-    private lateinit var currentScope: Scope // todo: kipróbálni nélküle
+    private lateinit var currentScope: Scope
 
     override fun visitProgram(ctx: kobraParser.ProgramContext) {
         currentNode = syntaxTree.root
@@ -27,36 +27,45 @@ class SyntaxTreeBuilderVisitor(
         super.visitProgram(ctx)
     }
 
+    override fun visitImportHeader(ctx: kobraParser.ImportHeaderContext): Unit = ctx.run {
+        val moduleName = identifier().text
+        val importAlias = importAlias()?.simpleIdentifier()?.text
+
+        ImportHeaderNode(moduleName, importAlias, currentNode)
+
+        super.visitImportHeader(ctx)
+    }
+
     override fun visitPropertyDeclaration(ctx: kobraParser.PropertyDeclarationContext) {
         val name = ctx.simpleIdentifier().text
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
-        val value = ctx.expression()
-        val type = typeHierarchy.find(symbol.type)
+        val value = ctx.expression().toPythonCode()
 
-        if (currentScope.name.contains("Class declaration"))
-            ClassPropertyDeclarationNode(symbol, value, type, currentNode, false).let {
-                currentNode.addChild(it)
-            }
-        else PropertyDeclarationNode(symbol, value, type, currentNode).let { currentNode.addChild(it) }
-
-        super.visitPropertyDeclaration(ctx)
+        when (currentScope) {
+            is ClassDeclarationScope -> ClassPropertyDeclarationNode(symbol, value, currentNode, false)
+            else -> PropertyDeclarationNode(symbol, value, currentNode)
+        }
     }
 
     override fun visitAssignment(ctx: kobraParser.AssignmentContext): Unit = ctx.run {
         val symbol = currentScope.resolveVariable(ctx.identifier().text)!!
-        val value = expression()
+        val receivers = ctx.identifier().text.split(".", "::").dropLast(1)
 
-        AssignmentNode(symbol, value, currentNode).let { currentNode.addChild(it) }
+        // ToDo: ez így nem túl jó
+        val rhsIsOnSelf = expression()?.text?.let {
+            it.substringBefore(".", it.substringBefore("("))
+        }?.let {
+            currentScope.resolveVariable(it)
+        }?.isMember == true
 
-        super.visitAssignment(this)
+        AssignmentNode(symbol, receivers, expression(), currentNode, rhsIsOnSelf)
     }
 
     override fun visitClassDeclaration(ctx: kobraParser.ClassDeclarationContext) {
         ClassDeclarationNode(ctx, currentNode).let {
-            currentNode.addChild(it)
             currentNode = it
         }
-        currentScope = currentScope.children.first { it.name == "Class declaration of ${ctx.className}" }
+        currentScope = currentScope.children.first { it is ClassDeclarationScope && it.typeSymbol.name == ctx.className }
         super.visitClassDeclaration(ctx).also {
             currentScope = currentScope.parent!!
             currentNode = currentNode.parent!!
@@ -64,7 +73,7 @@ class SyntaxTreeBuilderVisitor(
     }
 
     override fun visitPrimaryConstructor(ctx: kobraParser.PrimaryConstructorContext) {
-        currentScope = currentScope.children.first { it.name == "Primary constructor" }
+        currentScope = currentScope.children.first { it is PrimaryConstructorScope }
         super.visitPrimaryConstructor(ctx).also {
             currentScope = currentScope.parent!!
         }
@@ -72,17 +81,63 @@ class SyntaxTreeBuilderVisitor(
 
     override fun visitClassParameter(ctx: kobraParser.ClassParameterContext): Unit = ctx.run {
         val name = simpleIdentifier().text
-        val value = this.expression()
+        val value = this.expression()?.toPythonCode() ?: ""
         val symbol = currentScope.resolveVariable(name) ?: throw RuntimeException("Symbol '$name' not found.")
-        val type = typeHierarchy.find(symbol.type)
 
         if (isMember) {
-            currentNode.addChild(ClassPropertyDeclarationNode(symbol, value, type, currentNode))
+            ClassPropertyDeclarationNode(symbol, value, currentNode)
         } else {
             // todo: constructor parameter
         }
-        super.visitClassParameter(this)
     }
+
+    override fun visitFunctionDeclaration(ctx: kobraParser.FunctionDeclarationContext): Unit = ctx.run {
+        // todo: class methods
+        val methodSymbol = currentScope.resolveMethod(functionName)!!
+        val isOneLiner = this.functionBody()?.ASSIGNMENT() != null
+        val receiverName = this.receiverType()?.simpleIdentifier()?.text
+        val receiver = receiverName?.let { currentScope.resolveTypeOrThrow(receiverName) }
+
+        FunctionDeclarationNode(currentNode, methodSymbol, isOneLiner, receiver).let {
+            currentNode = it
+        }
+        currentScope = currentScope.children.first {
+            it is FunctionScope && it.name == "Function scope of ${methodSymbol.name}"
+        }
+
+        super.visitFunctionDeclaration(ctx)
+
+        currentNode = currentNode.parent!!
+        currentScope = currentScope.parent!!
+    }
+
+    override fun visitExpression(ctx: kobraParser.ExpressionContext): Unit = ctx.run {
+        ExpressionNode(currentNode, this)
+    }
+
+    override fun visitInitBlock(ctx: kobraParser.InitBlockContext): Unit = ctx.run {
+        currentScope = currentScope.children.first { it is PrimaryConstructorScope }
+        super.visitInitBlock(this)
+        currentScope = currentScope.parent!!
+    }
+
+    override fun visitForStatement(ctx: kobraParser.ForStatementContext): Unit = ctx.run {
+        currentNode = ForStatementNode(currentNode, this)
+        currentScope = currentScope.getForStatementScope(ctx)!!
+        super.visitControlStructureBody(this.controlStructureBody())
+        currentScope = currentScope.parent!!
+        currentNode = currentNode.parent!!
+    }
+
+    override fun visitUsingStatement(ctx: kobraParser.UsingStatementContext): Unit = ctx.run {
+        currentNode = UsingStatementNode(currentNode, this)
+        currentScope = currentScope.getUsingStatementScope(ctx)!!
+        super.visitControlStructureBody(this.controlStructureBody())
+        currentScope = currentScope.parent!!
+        currentNode = currentNode.parent!!
+    }
+
+    override fun visitDelegationSpecifiers(ctx: kobraParser.DelegationSpecifiersContext) {}
 }
 
 fun SyntaxTreeBuilderVisitor.generateCode() = StringBuilder().also {

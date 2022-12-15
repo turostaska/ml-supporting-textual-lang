@@ -3,7 +3,19 @@ grammar kobra;
 // SECTION: general
 
 program
-    : NL* statements NL* EOF
+    : NL* importList statements NL* EOF
+    ;
+
+importList
+    : importHeader*
+    ;
+
+importHeader
+    : IMPORT identifier (DOT MULT | importAlias)? semi?
+    ;
+
+importAlias
+    : AS simpleIdentifier
     ;
 
 declaration
@@ -16,12 +28,28 @@ propertyDeclaration
     : (VAL | VAR) simpleIdentifier (COLON NL* type)? (NL* (ASSIGNMENT NL* expression))?
     ;
 
-functionDeclaration // todo: modifiers
-    : FUN simpleIdentifier functionParameters (COLON NL* type)? functionBody
+receiverType
+    : simpleIdentifier
+    ;
+
+functionDeclaration
+    : functionModifiers? FUN (NL* receiverType NL* DOT)? simpleIdentifier functionParameters (COLON NL* type)? functionBody?
+    ;
+
+functionModifiers
+    : functionModifier+
+    ;
+
+functionModifier
+    : OVERRIDE
     ;
 
 variableDeclaration
     : simpleIdentifier (NL* COLON NL* type)?
+    ;
+
+multiVariableDeclaration
+    : LPAREN NL* variableDeclaration (NL* COMMA NL* variableDeclaration)* (NL* COMMA)? NL* RPAREN
     ;
 
 functionBody
@@ -39,12 +67,20 @@ functionParameter
 
 // SECTION: statements
 
-statement // todo
-    : declaration | assignment | expression | returnStatement
+statement
+    : declaration | assignment | expression | loopStatement | usingStatement
     ;
 
-returnStatement
-    : RETURN (expression | identifier)
+loopStatement
+    : forStatement
+    ;
+
+forStatement
+    : FOR NL* LPAREN (variableDeclaration | multiVariableDeclaration) IN expression RPAREN NL* controlStructureBody?
+    ;
+
+usingStatement
+    : USING NL* LPAREN expression RPAREN NL* controlStructureBody?
     ;
 
 assignment
@@ -62,7 +98,7 @@ block
 // SECTION: classes
 
 classDeclaration
-    : CLASS simpleIdentifier (primaryConstructor?)
+    : CLASS NL* simpleIdentifier (NL* primaryConstructor)?
     (COLON delegationSpecifiers)?
     (NL* classBody)?
     ;
@@ -71,7 +107,14 @@ classBody: LCURL NL* classMemberDeclarations NL* RCURL;
 
 classMemberDeclarations: (classMemberDeclaration NL*)*;
 
-classMemberDeclaration: declaration;
+classMemberDeclaration
+    : declaration
+    | initBlock
+    ;
+
+initBlock
+    : INIT NL* block
+    ;
 
 primaryConstructor
     : CONSTRUCTOR? classParameters
@@ -90,11 +133,11 @@ delegationSpecifiers
     ;
 
 delegationSpecifier
-    : simpleIdentifier constructorInvocation
+    : identifier constructorInvocation?
     ;
 
 constructorInvocation
-    : functionParameters
+    : valueArguments
     ;
 
 // SECTION: expressions
@@ -162,6 +205,11 @@ postfixUnaryExpression
 postfixUnarySuffix // todo
     : postfixUnaryOperator
     | callSuffix
+    | navigationSuffix
+    ;
+
+navigationSuffix
+    : memberAccessOperator NL* (simpleIdentifier | parenthesizedExpression | CLASS)
     ;
 
 unaryPrefix
@@ -183,13 +231,14 @@ primaryExpression
     ;
 
 parenthesizedExpression
-    : LPAREN NL* expression NL* RPAREN
+    : LPAREN NL* (expression (NL* COMMA NL* expression)* (NL* COMMA)?)? NL* RPAREN
     ;
 
 literalConstant
     : BooleanLiteral
     | IntegerLiteral
     | NullLiteral
+    | FloatLiteral
     ;
 
 stringLiteral
@@ -341,6 +390,16 @@ semi
     : (SEMICOLON | NL) NL*
     ;
 
+memberAccessOperator
+    : NL* DOT
+    | NL* safeNav
+    | COLONCOLON
+    ;
+
+safeNav
+    : QUEST_NO_WS DOT
+    ;
+
 semis
     : (SEMICOLON | NL)+
     ;
@@ -349,12 +408,6 @@ semis
 
 type
     : simpleIdentifier QUEST?
-    ;
-
-// SECTION: characters
-
-fragment Letter
-    : [a-zA-Z]
     ;
 
 // SECTION: literals
@@ -366,6 +419,10 @@ NullLiteral: 'null';
 IntegerLiteral
     : '1'..'9' ('0'..'9')*
     | '0'
+    ;
+
+FloatLiteral
+    : '0'..'9' DOT ('0'..'9')*
     ;
 
 StringLiteral
@@ -385,6 +442,7 @@ TRY: 'try';
 CATCH: 'catch';
 FINALLY: 'finally';
 FOR: 'for';
+USING: 'using';
 RETURN: 'return';
 IS: 'is';
 IN: 'in';
@@ -398,6 +456,7 @@ THROW: 'throw';
 CONTINUE: 'continue';
 BREAK: 'break';
 WHEN: 'when';
+INIT: 'init';
 
 // SECTION: lexicalModifiers
 
@@ -408,6 +467,8 @@ PROTECTED: 'protected';
 VAL: 'val';
 VAR: 'var';
 
+OVERRIDE: 'override';
+
 STRING: '"' (~[\r\n"])* '"';
 
 LPAREN: '(';
@@ -416,6 +477,7 @@ LCURL: '{';
 RCURL: '}';
 COMMA: ',';
 COLON: ':';
+COLONCOLON: '::';
 ASSIGNMENT: '=';
 QUEST: '?' Hidden;
 CONJ: '&&';
@@ -473,6 +535,12 @@ simpleIdentifier
     ;
 
 Identifier
-    : Letter (Letter | [0-9])*
+    : Letter (Letter | [0-9] | '_')*
     | '`' ~([\r\n] | '`')+ '`'
+    ;
+
+// SECTION: characters
+
+fragment Letter
+    : [a-zA-Z]
     ;

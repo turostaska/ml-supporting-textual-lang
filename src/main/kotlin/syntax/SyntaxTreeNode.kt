@@ -7,6 +7,10 @@ abstract class SyntaxTreeNode(
 ) {
     protected val _children: MutableList<SyntaxTreeNode> = mutableListOf()
 
+    init {
+        _parent?._children?.add(this)
+    }
+
     val parent get() = _parent
     val children get() = _children.toList()
 
@@ -17,7 +21,7 @@ abstract class SyntaxTreeNode(
 
     open fun appendCodeTo(sb: StringBuilder, indent: Int = 0) {
         sb.append(this.toCode().prependTab(indent))
-        sb.appendLine(System.lineSeparator())
+        sb.appendLine()
 
         this._children.forEach {
             it.appendCodeTo(sb, indent + 1)

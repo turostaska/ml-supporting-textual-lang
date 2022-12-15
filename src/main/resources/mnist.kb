@@ -1,0 +1,95 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+import torch.utils.data.DataLoader as DataLoader
+import torch.optim.Adam as Adam
+import torch.optim.Optimizer as Optimizer
+import torch.optim.lr_scheduler as lrScheduler
+
+
+class Net: nn.Module {
+    val conv1 = nn::Conv2d(1, 32, 3, 1)
+    val conv2 = nn::Conv2d(32, 64, 3, 1)
+    val dropout1 = nn::Dropout(0.25)
+    val dropout2 = nn::Dropout(0.5)
+    val fc1 = nn::Linear(9216, 128)
+    val fc2 = nn::Linear(128, 10)
+
+    override fun forward(input: Tensor): Tensor {
+        var x = input
+        x = conv1(x)
+        x = F::relu(x)
+        x = conv2(x)
+        x = F::relu(x)
+        x = F::max_pool2d(x, 2)
+        x = dropout1(x)
+        x = torch::flatten(x, 1)
+        x = fc1(x)
+        x = F::relu(x)
+        x = dropout2(x)
+        x = fc2(x)
+        val output = F::log_softmax(x, dim=1)
+        return output
+    }
+}
+
+val batchSize = 8
+val lr = 0.00001
+val numEpochs = 8
+
+val transform = transforms::Compose([
+    transforms::ToTensor(),
+    transforms::Normalize((0.1307,), (0.3081,)),
+])
+
+val dsTrain = datasets::MNIST("./data", train=true, download=true, transform=transform)
+val dsTest  = datasets::MNIST("./data", train=false, transform=transform)
+
+val trainLoader = DataLoader(dsTrain, batch_size = batchSize)
+val testLoader = DataLoader(dsTest, batch_size = 1)
+
+class NetTrainer(
+    trainLoader: DataLoader,
+    testLoader: DataLoader,
+    net: Module,
+    numEpochs: Int,
+    lr: Float,
+): KModule(trainLoader, testLoader, net, numEpochs, lr) {
+    override fun lossFunction(output: Tensor, label: Tensor): Tensor = F::nll_loss(output, label, reduction="sum")
+    override fun createOptimizer(): Optimizer = Adam(this.net.parameters(), lr=this.lr)
+    override fun createScheduler(): Any? = lrScheduler::StepLR(this.optimizer, step_size=1, gamma=0.7)
+
+    override fun doEvalEpoch(epoch: Int) {
+        this.net.eval()
+        var testLoss = 0.0
+        var correct = 0.0
+        using ( torch::no_grad() ) {
+            for ( (input, label) in this.testLoader ) {
+                input = input.to(this.device)
+                label = label.to(this.device)
+
+                val output = this.net(input)
+
+                testLoss = testLoss + this.lossFunction(output, label).item()
+
+                val pred = output.argmax(dim=1, keepdim=true)
+                correct = correct + pred.eq(label.view_as(pred)).sum().item()
+            }
+        }
+        testLoss = testLoss / this.testLoader.size()
+        correct = correct / this.testLoader.size()
+        print("Test in epoch ${epoch} ended, loss: ${testLoss}, success rate: ${correct}")
+
+        this.scheduler.step()
+    }
+}
+
+NetTrainer(
+    trainLoader,
+    testLoader,
+    Net(),
+    numEpochs,
+    lr,
+).doTrain()

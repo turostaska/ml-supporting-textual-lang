@@ -1,6 +1,6 @@
 package util
 
-const val TAB = "\t"
+const val TAB = "    "
 
 fun String.prependTab(num: Int) =
     this.lines().joinToString(System.lineSeparator()) { it.prependIndent(TAB.repeat(num)) }
@@ -16,3 +16,21 @@ fun <T> Iterable<T>.joinToCodeWithTabToAllLinesButFirst(num: Int, transform: ((T
     this.joinToString(System.lineSeparator()) {
         transform(it).prependTab(num)
     }.removePrefix(TAB.repeat(num))
+
+fun String.splitOnFirst(delimiter: String): Pair<String, String> {
+    require(delimiter in this)
+
+    val before = this.substringBefore(delimiter)
+    val after = this.substringAfter(delimiter)
+
+    return before to after
+}
+
+fun String.splitOnLast(delimiter: String): Pair<String, String> {
+    require(delimiter in this)
+
+    val before = this.substringBeforeLast(delimiter)
+    val after = this.substringAfterLast(delimiter)
+
+    return before to after
+}

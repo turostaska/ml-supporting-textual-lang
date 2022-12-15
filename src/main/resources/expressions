@@ -1,2 +1,30 @@
 val a = true || false
 val b = true && false
+val c = a ?: b
+
+// a = 5 + 9 * (4 ?: 3)
+// a = 0
+
+// val l = [ 1, 3, 2 ?: 5, "kutya" ]
+// a.b = 4
+
+fun a(a: String, b: Int,) {
+    print("a")
+}
+
+fun a() {
+    print("b")
+}
+
+// CustomClass az Any alá, minden új osztály ez alá
+// absztrakt + expressionök
+
+
+// header file a Python függvényekről
+// Python language leírás -> generálni
+// python parser -> függvények, osztályok
+// python file -> header -> generálni leírást
+// python alaplibek + machine learning libek
+// import, scope-kezelés, header generálás
+
+// introduction: motiváció, bemutatja, mi lesz a dolgozatban, végül fejezetekre lebontva mi lesz (1.5-2 oldal)

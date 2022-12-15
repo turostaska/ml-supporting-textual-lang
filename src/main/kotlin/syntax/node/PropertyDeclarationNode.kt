@@ -1,21 +1,18 @@
 package syntax.node
 
-import com.kobra.kobraParser.ExpressionContext
 import symtab.VariableSymbol
+import symtab.pythonName
 import syntax.SyntaxTreeNode
-import syntax.expression.toPythonCode
-import type.Type
 
 open class PropertyDeclarationNode(
     private val symbol: VariableSymbol,
-    protected val value: ExpressionContext?,
-    private val type: Type,
+    protected val value: String,
     parent: SyntaxTreeNode,
 ): SyntaxTreeNode(_parent = parent) {
-    override fun toCode() = """
-        |$name: ${type.pythonName} = ${value?.toPythonCode() ?: throw RuntimeException("Property has no value")}
-    """.trimMargin()
+    override fun toCode() = "$name: $pythonTypeName = $value"
+
+    protected val pythonTypeName = this.symbol.typeSymbol.pythonName()
 
     protected val isMutable = this.symbol.isMutable
-    val name = this.symbol.name
+    val name = this.symbol.pythonSymbolName!!
 }

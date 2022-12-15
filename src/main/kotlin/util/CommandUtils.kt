@@ -17,9 +17,9 @@ fun String.runCommand(
         .inputStream.bufferedReader().readText()
 }.onFailure { it.printStackTrace() }.getOrNull()
 
-fun String.runPythonScript() = File("./temp.py").also {
+fun String.runPythonScript() = File("temp.py").also {
     it.writeText(this)
-    it.deleteOnExit()
+//    it.deleteOnExit()
 }.runPythonScript()
 
-fun File.runPythonScript() = "python ${this.absolutePath}".runCommand()
+fun File.runPythonScript() = "python3 ${this.absolutePath}".runCommand()

@@ -7,15 +7,15 @@ import util.second
 fun ExpressionContext.toPythonCode(): String = this.disjunction().toPythonCode()
 
 private fun DisjunctionContext.toPythonCode(): String = if (this.DISJ().any())
-    "${conjunction().first().toPythonCode()} or ${conjunction().second().toPythonCode()}"
+    conjunction().joinToString(" or ") { it.toPythonCode() }
 else this.conjunction().first().toPythonCode()
 
 private fun ConjunctionContext.toPythonCode(): String = if (this.CONJ().any())
-    "${equality().first().toPythonCode()} and ${equality().second().toPythonCode()}"
+    equality().joinToString(" and ") { it.toPythonCode() }
 else this.equality().first().toPythonCode()
 
 private fun EqualityContext.toPythonCode(): String = if (this.equalityOperator().any())
-    "${comparison().first().toPythonCode()} and ${comparison().second().toPythonCode()}"
+    comparison().joinToString(" == ") { it.toPythonCode() }
 else this.comparison().first().toPythonCode()
 
 private fun ComparisonContext.toPythonCode(): String {
@@ -118,9 +118,31 @@ private fun PrefixUnaryExpressionContext.toPythonCode(): String {
 }
 
 private fun PostfixUnaryExpressionContext.toPythonCode(): String {
-    return if (this.postfixUnarySuffix().any()) {
-        TODO("lehet ez egyáltalán expression?")
-    } else this.primaryExpression().toPythonCode()
+    if (postfixUnarySuffix()?.firstOrNull() == null)
+        return this.primaryExpression().toPythonCode()
+
+    val receiverId = primaryExpression().simpleIdentifier()?.text
+        ?: primaryExpression().text?.let { if (it == "this") "self" else it }
+
+    val code = StringBuilder(receiverId)
+    for (suffix in postfixUnarySuffix()) {
+        val suffixId = suffix.navigationSuffix()?.simpleIdentifier()?.text
+
+        when {
+            suffix.isMemberNavigationSuffix() || suffix.isStaticNavigationSuffix() -> {
+                code.append(".${suffixId!!}")
+            }
+
+            suffix.isCallSuffix() -> {
+                val namedParamsCode = suffix.namedParams()
+                code.append("(${namedParamsCode})")
+            }
+
+            else -> TODO()
+        }
+    }
+
+    return code.toString()
 }
 
 private fun PrimaryExpressionContext.toPythonCode(): String {
@@ -128,10 +150,45 @@ private fun PrimaryExpressionContext.toPythonCode(): String {
         isBoolean -> if (literalConstant().BooleanLiteral().text == "true") "True" else "False"
         isNullLiteral -> "None"
         isInt -> this.literalConstant().IntegerLiteral().text
-        isString -> this.stringLiteral().text
+        isString -> this.stringLiteral().text.let(::toPythonFormatString)
+        isFloat -> this.literalConstant().FloatLiteral().text
         isSimpleIdentifier -> this.simpleIdentifier().text
-        isParenthesized -> "(${this.parenthesizedExpression().expression().toPythonCode()})"
+        isParenthesized -> "(${this.parenthesizedExpression().expression().joinToString { it.toPythonCode() }})"
         isCollection -> "[ ${this.collectionLiteral().expression().joinToString { it.toPythonCode() }} ]"
+        isReturnStatement -> "return ${this.jumpExpression().expression().toPythonCode()}"
+        isIfExpression -> this.ifExpression().toPythonCode()
+        this.text == "this" -> "this"
         else -> throw RuntimeException("Can't generate code from primary expression '${this.text}'")
     }
+}
+
+private fun StatementContext.toPythonCode(): String {
+    return when {
+        this.expression() != null -> this.expression().toPythonCode()
+        else -> TODO()
+    }
+}
+
+private fun IfExpressionContext.toPythonCode(): String {
+    val conditionCode = condition.toPythonCode()
+    return if (this.isOneLiner()) {
+        val ifBranchCode = ifBranch.statement().expression().toPythonCode()
+        val elseBranchCode = elseBranch.statement().expression().toPythonCode()
+
+        "$ifBranchCode if ($conditionCode) else $elseBranchCode"
+    } else {
+        val ifBranchCode = ifBranch.block()?.statements()?.statement()?.map {
+            it.expression().toPythonCode()
+        } ?: ifBranch.statement().expression().toPythonCode().let(::listOf)
+        val elseBranchCode = elseBranch.block()?.statements()?.statement()?.map {
+            it.expression().toPythonCode()
+        } ?: elseBranch.statement().expression().toPythonCode().let(::listOf)
+
+        "(${ifBranchCode.toTernaries()}) if ($conditionCode) else ${elseBranchCode.toTernaries()}"
+    }
+}
+
+fun List<String>.toTernaries(): String {
+    return if (this.size > 1) "(${this.drop(1).toTernaries()}) if (${this.first()} or True) else None"
+    else this.first()
 }
